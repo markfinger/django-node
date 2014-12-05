@@ -1,14 +1,26 @@
-class EnvironmentInterrogationException(Exception):
+class ErrorInterrogatingEnvironment(Exception):
     pass
 
 
-class MissingDependencyException(Exception):
+class MissingDependency(Exception):
     pass
 
 
-class OutdatedVersionException(Exception):
+class OutdatedDependency(Exception):
     pass
 
 
-class MalformedVersionInputException(Exception):
+class MalformedVersionInput(Exception):
+    pass
+
+
+class NpmInstallError(Exception):
+    pass
+
+
+class NpmInstallArgumentsError(Exception):
+    pass
+
+
+class NpmInstallDisallowed(Exception):
     pass

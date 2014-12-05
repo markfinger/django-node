@@ -8,5 +8,13 @@ Install
 -------
 
 ```bash
-pip install -e git+ssh://git@github.com/markfinger/django-node.git#egg=django_node
+pip install django-node
+```
+
+
+Running the tests
+-----------------
+
+```bash
+python django_node/tests/runner.py
 ```

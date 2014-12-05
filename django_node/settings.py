@@ -8,7 +8,7 @@ PATH_TO_NODE = setting_overrides.get(
 )
 
 NODE_VERSION_COMMAND = setting_overrides.get(
-    'NPM_VERSION_ARGUMENT',
+    'NODE_VERSION_COMMAND',
     (PATH_TO_NODE, '--version',)
 )
 
@@ -34,5 +34,20 @@ NPM_VERSION_FILTER = setting_overrides.get(
 
 NPM_INSTALL_COMMAND = setting_overrides.get(
     'NPM_INSTALL_COMMAND',
-    (PATH_TO_NPM, 'install',)
+    ('install',)
+)
+
+RAISE_ON_MISSING_DEPENDENCIES = setting_overrides.get(
+    'RAISE_ON_MISSING_DEPENDENCIES',
+    True,
+)
+
+RAISE_ON_OUTDATED_DEPENDENCIES = setting_overrides.get(
+    'RAISE_ON_OUTDATED_DEPENDENCIES',
+    True,
+)
+
+ALLOW_NPM_INSTALL = setting_overrides.get(
+    'ALLOW_NPM_INSTALL',
+    True,
 )
