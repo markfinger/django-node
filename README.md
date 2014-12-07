@@ -11,9 +11,31 @@ node.run('/path/to/some/file.js', '--some-argument')
 npm.install('/path/to/some/directory')
 ```
 
+Documentation
+-------------
 
-Install
--------
+- [Installation](#installation)
+- [Node.js](#nodejs)
+  - [is_installed](#django_nodenodeis_installed)
+  - [version](#django_nodenodeversion)
+  - [version_raw](#django_nodenodeversion_raw)
+  - [ensure_installed()](#django_nodenodeensure_installed)
+  - [ensure_version_gte()](#django_nodenodeensure_version_gte)
+  - [run()](#django_nodenoderun)
+- [NPM](#npm)
+  - [is_installed](#django_nodenpm)
+  - [version](#django_nodenpmversion)
+  - [version_raw](#django_nodenpmversion_raw)
+  - [ensure_installed()](#django_nodenpmensure_installed)
+  - [ensure_version_gte()](#django_nodenpmensure_version_gte)
+  - [install()](#django_nodenpminstall)
+  - [run()](#django_nodenpmrun)
+- [Settings](#settings)
+- [Running the tests](#running-the-tests)
+
+
+Installation
+------------
 
 ```bash
 pip install django-node
