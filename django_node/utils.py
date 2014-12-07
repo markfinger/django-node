@@ -1,13 +1,17 @@
 import subprocess
 import tempfile
-from .settings import (
-    PATH_TO_NODE, PATH_TO_NPM, NODE_VERSION_COMMAND, NPM_VERSION_COMMAND, NODE_VERSION_FILTER, NPM_VERSION_FILTER,
-    RAISE_ON_MISSING_DEPENDENCIES, RAISE_ON_OUTDATED_DEPENDENCIES,
-)
-from .exceptions import ErrorInterrogatingEnvironment, MalformedVersionInput, MissingDependency, OutdatedDependency
+import settings
+import exceptions
 
 
 def run_command(cmd_to_run):
+    """
+    Wrapper around subprocess that pipes the stderr and stdout from `cmd_to_run`
+    to temporary files. Using the temporary files gets around subprocess.PIPE's
+    issues with handling large buffers.
+
+    Returns a tuple, containing the stderr and stdout as strings.
+    """
     with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
 
         # Run the command
@@ -24,7 +28,7 @@ def _interrogate(cmd_to_run, version_filter):
     try:
         stderr, stdout = run_command(cmd_to_run)
         if stderr:
-            raise ErrorInterrogatingEnvironment(stderr)
+            raise exceptions.ErrorInterrogatingEnvironment(stderr)
         installed = True
         version_raw = stdout.strip()
     except OSError:
@@ -36,8 +40,14 @@ def _interrogate(cmd_to_run, version_filter):
     return installed, version, version_raw,
 
 # Interrogate the system
-node_installed, node_version, node_version_raw = _interrogate(NODE_VERSION_COMMAND, NODE_VERSION_FILTER)
-npm_installed, npm_version, npm_version_raw = _interrogate(NPM_VERSION_COMMAND, NPM_VERSION_FILTER)
+node_installed, node_version, node_version_raw = _interrogate(
+    (settings.PATH_TO_NODE, settings.NODE_VERSION_COMMAND,),
+    settings.NODE_VERSION_FILTER,
+)
+npm_installed, npm_version, npm_version_raw = _interrogate(
+    (settings.PATH_TO_NPM, settings.NPM_VERSION_COMMAND,),
+    settings.NPM_VERSION_FILTER,
+)
 
 _missing_dependency_error_message = '{application} is not installed or cannot be found at path "{path}".'
 
@@ -54,16 +64,16 @@ NODE_NAME = 'Node.js'
 
 def _validate_version_iterable(version):
     if not isinstance(version, tuple):
-        raise MalformedVersionInput(
+        raise exceptions.MalformedVersionInput(
             'Versions must be tuples. Received {0}'.format(version)
         )
     if len(version) < 3:
-        raise MalformedVersionInput(
+        raise exceptions.MalformedVersionInput(
             'Versions must have three numbers defined. Received {0}'.format(version)
         )
     for number in version:
         if not isinstance(number, (int, long,)):
-            raise MalformedVersionInput(
+            raise exceptions.MalformedVersionInput(
                 'Versions can only contain number. Received {0}'.format(version)
             )
 
@@ -85,10 +95,10 @@ def _format_version(version):
 def ensure_dependency_installed(application, required_version=None):
     if application == NPM_NAME:
         is_installed = npm_installed
-        path = PATH_TO_NPM
+        path = settings.PATH_TO_NPM
     else:
         is_installed = node_installed
-        path = PATH_TO_NODE
+        path = settings.PATH_TO_NODE
     if not is_installed:
         error = _missing_dependency_error_message.format(
             application=application,
@@ -98,8 +108,8 @@ def ensure_dependency_installed(application, required_version=None):
             error += _version_required_error_message.format(
                 required_version=_format_version(required_version)
             )
-        e = MissingDependency(error)
-        if RAISE_ON_MISSING_DEPENDENCIES:
+        e = exceptions.MissingDependency(error)
+        if settings.RAISE_ON_MISSING_DEPENDENCIES:
             raise e
         else:
             print(e)
@@ -111,14 +121,14 @@ def ensure_dependency_version_gte(application, required_version):
     else:
         current_version = node_version
     if _check_if_version_is_outdated(current_version, required_version):
-        e = OutdatedDependency(
+        e = exceptions.OutdatedDependency(
             _outdated_version_error_message.format(
                 application=application,
                 current_version=_format_version(current_version),
                 required_version=_format_version(required_version),
             )
         )
-        if RAISE_ON_OUTDATED_DEPENDENCIES:
+        if settings.RAISE_ON_OUTDATED_DEPENDENCIES:
             raise e
         else:
             print(e)

@@ -1,23 +1,50 @@
-from .settings import PATH_TO_NODE
-from .utils import (
-    run_command, ensure_dependency_installed, ensure_dependency_version_gte, NODE_NAME,
-    node_installed as installed,
-    node_version as version,
-    node_version_raw as version_raw,
-)
+import settings
+import utils
+
+is_installed = utils.node_installed
+version = utils.node_version
+version_raw = utils.node_version_raw
 
 
 def ensure_installed():
-    ensure_dependency_installed(NODE_NAME)
+    """
+    A method which will raise an exception if Node.js is not installed.
+    """
+    utils.ensure_dependency_installed(utils.NODE_NAME)
 
 
 def ensure_version_gte(required_version):
+    """
+    A method which will raise an exception if the installed version of Node.js is
+    less than the version required.
+
+    Arguments:
+
+    `version_required`: a tuple containing the minimum version required.
+
+    ```python
+    from django_node import node
+
+    node_version_required = (0, 10, 0)
+
+    node.ensure_version_gte(node_version_required)
+    ```
+    """
     ensure_installed()
-    ensure_dependency_version_gte(NODE_NAME, required_version)
+    utils.ensure_dependency_version_gte(utils.NODE_NAME, required_version)
 
 
-def run(cmd_to_run):
+def run(*args):
+    """
+    A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
+
+    ```python
+    from django_node import node
+
+    stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
+    ```
+    """
     ensure_installed()
-    return run_command(
-        (PATH_TO_NODE,) + cmd_to_run
+    return utils.run_command(
+        (settings.PATH_TO_NODE,) + tuple(args)
     )

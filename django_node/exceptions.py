@@ -20,7 +20,3 @@ class NpmInstallError(Exception):
 
 class NpmInstallArgumentsError(Exception):
     pass
-
-
-class NpmInstallDisallowed(Exception):
-    pass

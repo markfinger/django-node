@@ -33,8 +33,8 @@ class TestDjangoNode(unittest.TestCase):
             shutil.rmtree(PATH_TO_NODE_MODULES)
         self.write_package_json(self.package_json_contents)
 
-    def test_node_installed(self):
-        self.assertTrue(node.installed)
+    def test_node_is_installed(self):
+        self.assertTrue(node.is_installed)
 
     def test_node_version_raw(self):
         self.assertTrue(isinstance(node.version_raw, basestring))
@@ -44,8 +44,8 @@ class TestDjangoNode(unittest.TestCase):
         self.assertTrue(isinstance(node.version, tuple))
         self.assertGreaterEqual(len(node.version), 3)
         
-    def test_npm_installed(self):
-        self.assertTrue(npm.installed)
+    def test_npm_is_installed(self):
+        self.assertTrue(npm.is_installed)
 
     def test_npm_version_raw(self):
         self.assertTrue(isinstance(npm.version_raw, basestring))
@@ -90,32 +90,32 @@ class TestDjangoNode(unittest.TestCase):
         npm.ensure_version_gte((2, 1, 8,))
 
     def test_node_run_returns_output(self):
-        stderr, stdout = node.run(('--version',))
+        stderr, stdout = node.run('--version',)
         stdout = stdout.strip()
         self.assertEqual(stdout, node.version_raw)
 
     def test_npm_run_returns_output(self):
-        stderr, stdout = npm.run(('--version',))
+        stderr, stdout = npm.run('--version',)
         stdout = stdout.strip()
         self.assertEqual(stdout, npm.version_raw)
 
     def test_npm_install_installs_packages(self):
-        stdout = npm.install(TEST_DIR, silent=True)
+        stderr, stdout = npm.install(TEST_DIR, silent=True)
         self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
         self.assertTrue(os.path.exists(PATH_TO_INSTALLED_PACKAGE))
         self.assertIn(DEPENDENCY_PACKAGE, stdout)
 
     def test_npm_install_can_install_a_specific_package(self):
-        stdout = npm.install(TEST_DIR, (PACKAGE_TO_INSTALL,), silent=True)
+        stderr, stdout = npm.install(TEST_DIR, (PACKAGE_TO_INSTALL,), silent=True)
         self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
         self.assertTrue(os.path.exists(PATH_TO_PACKAGE_TO_INSTALL))
         self.assertIn(PACKAGE_TO_INSTALL, stdout)
 
     def test_npm_install_can_install_a_specific_package_and_save_to_package_json(self):
-        stdout = npm.install(TEST_DIR, (PACKAGE_TO_INSTALL,), ('--save',), silent=True)
+        stderr, stdout = npm.install(TEST_DIR, (PACKAGE_TO_INSTALL, '--save',), silent=True)
         self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
         self.assertTrue(os.path.exists(PATH_TO_PACKAGE_TO_INSTALL))
         self.assertIn(PACKAGE_TO_INSTALL, stdout)
         package_json_contents = self.read_package_json()
         package_json = json.loads(package_json_contents)
-        self.assertTrue(package_json['dependencies'].has_key('jquery'))
+        self.assertIn('jquery', package_json['dependencies'])

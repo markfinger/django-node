@@ -1,44 +1,89 @@
 import os
-from .settings import NPM_INSTALL_COMMAND, PATH_TO_NPM, ALLOW_NPM_INSTALL
-from .exceptions import NpmInstallError, NpmInstallArgumentsError, NpmInstallDisallowed
-from .utils import (
-    run_command, ensure_dependency_installed, ensure_dependency_version_gte, NPM_NAME,
-    npm_installed as installed,
-    npm_version as version,
-    npm_version_raw as version_raw,
-)
+import settings
+import exceptions
+import utils
+
+is_installed = utils.npm_installed
+version = utils.npm_version
+version_raw = utils.npm_version_raw
 
 
 def ensure_installed():
-    ensure_dependency_installed(NPM_NAME)
+    """
+    A method which will raise an exception if NPM is not installed.
+    """
+    utils.ensure_dependency_installed(utils.NPM_NAME)
 
 
 def ensure_version_gte(required_version):
+    """
+    A method which will raise an exception if the installed version of NPM is
+    less than the version required.
+
+    Arguments:
+
+    - `version_required`: a tuple containing the minimum version required.
+
+    ```
+    from django_node import npm
+
+    npm_version_required = (2, 0, 0)
+
+    npm.ensure_version_gte(npm_version_required)
+    ```
+    """
     ensure_installed()
-    ensure_dependency_version_gte(NPM_NAME, required_version)
+    utils.ensure_dependency_version_gte(utils.NPM_NAME, required_version)
 
 
-def run(cmd_to_run):
+def run(*args):
+    """
+    A method which will invoke NPM with the arguments provided and return the resulting stderr and stdout.
+
+    ```
+    from django_node import npm
+
+    stderr, stdout = npm.run('install', '--save', 'some-package')
+    ```
+    """
     ensure_installed()
-    return run_command(
-        (PATH_TO_NPM,) + cmd_to_run
+    return utils.run_command(
+        (settings.PATH_TO_NPM,) + tuple(args)
     )
 
 
-def install(target_dir, packages=None, options=None, silent=None):
+def install(target_dir, arguments=None, silent=None):
     """
-    cd into `target_dir`,
-    call `NPM_INSTALL_COMMAND`, and then
-    cd back to the previous directory
+    A method that will invoke `npm install` in a specified directory. Optional arguments will be
+    appended to the invoked command.
+
+    Arguments:
+
+    - `target_dir`: a string pointing to the directory which the command will be invoked in.
+    - `arguments`: an optional tuple of strings to append to the invoked command.
+    - `silent`: an optional boolean indicating that NPM's output should not be printed to the terminal.
+
+    ```
+    from django_node import npm
+
+    # Install the dependencies in a particular directory
+    stderr, stdout = npm.install('/path/to/some/directory/')
+
+    # Install a dependency into a particular directory and persist it to the package.json file
+    stderr, stdout = npm.install('/path/to/some/directory/', ('--save', 'some-package'))
+    ```
     """
 
-    if not ALLOW_NPM_INSTALL:
-        raise NpmInstallDisallowed(
-            'Trying to install in to "{target_dir}" the packages "{packages}" with options "{options}"'.format(
-                target_dir=target_dir,
-                packages=packages,
-                options=options,
-            )
+    if not isinstance(target_dir, str):
+        raise exceptions.NpmInstallArgumentsError(
+            'npm.install\'s `target_dir` parameter must be either a str or unicode. Received: {0}'.format(target_dir)
+        )
+
+    if arguments is None:
+        arguments = ()
+    elif not isinstance(arguments, tuple):
+        raise exceptions.NpmInstallArgumentsError(
+            'npm.install\'s `arguments` parameter must be either a tuple or None. Received: {0}'.format(arguments)
         )
 
     ensure_installed()
@@ -47,25 +92,7 @@ def install(target_dir, packages=None, options=None, silent=None):
 
     os.chdir(target_dir)
 
-    cmd_to_run = NPM_INSTALL_COMMAND
-
-    if packages is not None and not isinstance(packages, tuple):
-        raise NpmInstallArgumentsError(
-            'packages argument must be either a tuple or None. Received: {0}'.format(packages)
-        )
-
-    if options is not None and not isinstance(options, tuple):
-        raise NpmInstallArgumentsError(
-            'options argument must be either a tuple or None. Received: {0}'.format(options)
-        )
-
-    if packages:
-        cmd_to_run += packages
-
-    if options:
-        cmd_to_run += options
-
-    stderr, stdout = run(cmd_to_run)
+    stderr, stdout = run(settings.NPM_INSTALL_COMMAND, *arguments)
 
     if stderr:
         for line in stderr.splitlines():
@@ -73,13 +100,13 @@ def install(target_dir, packages=None, options=None, silent=None):
                 print(line)
             else:
                 os.chdir(origin_dir)
-                raise NpmInstallError(stderr)
+                raise exceptions.NpmInstallError(stderr)
 
     if stdout and not silent:
         print('-' * 80)
         print(
             'Output from `{command}` in {target_dir}'.format(
-                command=' '.join((PATH_TO_NPM,) + NPM_INSTALL_COMMAND),
+                command=' '.join((settings.PATH_TO_NPM,) + arguments),
                 target_dir=target_dir,
             )
         )
@@ -89,4 +116,4 @@ def install(target_dir, packages=None, options=None, silent=None):
 
     os.chdir(origin_dir)
 
-    return stdout
+    return stderr, stdout
