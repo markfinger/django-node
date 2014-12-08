@@ -22,7 +22,7 @@ def ensure_version_gte(required_version):
 
     `version_required`: a tuple containing the minimum version required.
 
-    ```python
+    ```
     from django_node import node
 
     node_version_required = (0, 10, 0)
@@ -38,7 +38,7 @@ def run(*args):
     """
     A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
 
-    ```python
+    ```
     from django_node import node
 
     stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
