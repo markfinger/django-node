@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### 1.0.0 (12/12/2014)
+
+Removed the `RAISE_ON_MISSING_DEPENDENCIES` and `RAISE_ON_OUTDATED_DEPENDENCIES` settings.
+
 ### 0.2.0 (7/12/2014)
 
 Most of the functions are now exposed from `django_node.node` and `django_node.npm`.
