@@ -18,8 +18,8 @@ def run_command(cmd_to_run):
         popen = subprocess.Popen(cmd_to_run, stdout=stdout_file, stderr=stderr_file)
         popen.wait()
 
-        stdout_file.seek(0)
         stderr_file.seek(0)
+        stdout_file.seek(0)
 
         return stderr_file.read(), stdout_file.read()
 
@@ -92,7 +92,7 @@ def _format_version(version):
     return '.'.join(map(unicode, version))
 
 
-def ensure_dependency_installed(application, required_version=None):
+def raise_if_dependency_missing(application, required_version=None):
     if application == NPM_NAME:
         is_installed = npm_installed
         path = settings.PATH_TO_NPM
@@ -108,27 +108,19 @@ def ensure_dependency_installed(application, required_version=None):
             error += _version_required_error_message.format(
                 required_version=_format_version(required_version)
             )
-        e = exceptions.MissingDependency(error)
-        if settings.RAISE_ON_MISSING_DEPENDENCIES:
-            raise e
-        else:
-            print(e)
+        raise exceptions.MissingDependency(error)
 
 
-def ensure_dependency_version_gte(application, required_version):
+def raise_if_dependency_version_less_than(application, required_version):
     if application == NPM_NAME:
         current_version = npm_version
     else:
         current_version = node_version
     if _check_if_version_is_outdated(current_version, required_version):
-        e = exceptions.OutdatedDependency(
+        raise exceptions.OutdatedDependency(
             _outdated_version_error_message.format(
                 application=application,
                 current_version=_format_version(current_version),
                 required_version=_format_version(required_version),
             )
         )
-        if settings.RAISE_ON_OUTDATED_DEPENDENCIES:
-            raise e
-        else:
-            print(e)

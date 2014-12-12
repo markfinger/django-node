@@ -10,7 +10,7 @@ def ensure_installed():
     """
     A method which will raise an exception if Node.js is not installed.
     """
-    utils.ensure_dependency_installed(utils.NODE_NAME)
+    utils.raise_if_dependency_missing(utils.NODE_NAME)
 
 
 def ensure_version_gte(required_version):
@@ -31,7 +31,7 @@ def ensure_version_gte(required_version):
     ```
     """
     ensure_installed()
-    utils.ensure_dependency_version_gte(utils.NODE_NAME, required_version)
+    utils.raise_if_dependency_version_less_than(utils.NODE_NAME, required_version)
 
 
 def run(*args):

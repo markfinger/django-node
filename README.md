@@ -173,9 +173,19 @@ stderr, stdout = npm.run('install', '--save', 'some-package')
 Settings
 --------
 
+Settings can be overridden by defining a dictionary name `DJANGO_NODE` in your settings file.
+
+```python
+# Example
+
+DJANGO_NODE = {
+    'PATH_TO_NODE': '/path/to/some/binary',
+}
+```
+
 ### DJANGO_NODE['PATH_TO_NODE']
 
-An path that will resolve to Node.js.
+A path that will resolve to Node.js.
 
 Default:
 ```python
@@ -203,7 +213,7 @@ lambda version: tuple(map(int, (version[1:] if version[0] == 'v' else version).s
 
 ### DJANGO_NODE['PATH_TO_NPM']
 
-An path that will resolve to NPM.
+A path that will resolve to NPM.
 
 Default
 ```python
@@ -236,26 +246,6 @@ The install command invoked on NPM. This is prepended to all calls to `django_no
 Default
 ```python
 'install'
-```
-
-### DJANGO_NODE['RAISE_ON_MISSING_DEPENDENCIES']
-
-Allow calls to `django_node.node.ensure_installed` and `django_node.npm.ensure_installed`
-to raise exceptions if the dependency is not installed.
-
-Default
-```python
-True
-```
-
-### DJANGO_NODE['RAISE_ON_OUTDATED_DEPENDENCIES']
-
-Allow calls to `django_node.node.ensure_version_gte` and `django_node.npm.ensure_version_gte`
-to raise exceptions if the dependency is less than the one specified.
-
-Default
-```python
-True
 ```
 
 

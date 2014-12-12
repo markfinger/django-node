@@ -12,7 +12,7 @@ def ensure_installed():
     """
     A method which will raise an exception if NPM is not installed.
     """
-    utils.ensure_dependency_installed(utils.NPM_NAME)
+    utils.raise_if_dependency_missing(utils.NPM_NAME)
 
 
 def ensure_version_gte(required_version):
@@ -33,7 +33,7 @@ def ensure_version_gte(required_version):
     ```
     """
     ensure_installed()
-    utils.ensure_dependency_version_gte(utils.NPM_NAME, required_version)
+    utils.raise_if_dependency_version_less_than(utils.NPM_NAME, required_version)
 
 
 def run(*args):

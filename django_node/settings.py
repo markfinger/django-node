@@ -36,13 +36,3 @@ NPM_INSTALL_COMMAND = setting_overrides.get(
     'NPM_INSTALL_COMMAND',
     'install',
 )
-
-RAISE_ON_MISSING_DEPENDENCIES = setting_overrides.get(
-    'RAISE_ON_MISSING_DEPENDENCIES',
-    True,
-)
-
-RAISE_ON_OUTDATED_DEPENDENCIES = setting_overrides.get(
-    'RAISE_ON_OUTDATED_DEPENDENCIES',
-    True,
-)
