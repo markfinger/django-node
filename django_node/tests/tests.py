@@ -106,13 +106,13 @@ class TestDjangoNode(unittest.TestCase):
         self.assertIn(DEPENDENCY_PACKAGE, stdout)
 
     def test_npm_install_can_install_a_specific_package(self):
-        stderr, stdout = npm.install(TEST_DIR, (PACKAGE_TO_INSTALL,), silent=True)
+        stderr, stdout = npm.install(TEST_DIR, PACKAGE_TO_INSTALL, silent=True)
         self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
         self.assertTrue(os.path.exists(PATH_TO_PACKAGE_TO_INSTALL))
         self.assertIn(PACKAGE_TO_INSTALL, stdout)
 
     def test_npm_install_can_install_a_specific_package_and_save_to_package_json(self):
-        stderr, stdout = npm.install(TEST_DIR, (PACKAGE_TO_INSTALL, '--save',), silent=True)
+        stderr, stdout = npm.install(TEST_DIR, PACKAGE_TO_INSTALL, '--save', silent=True)
         self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
         self.assertTrue(os.path.exists(PATH_TO_PACKAGE_TO_INSTALL))
         self.assertIn(PACKAGE_TO_INSTALL, stdout)

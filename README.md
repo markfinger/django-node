@@ -156,7 +156,10 @@ from django_node import npm
 stderr, stdout = npm.install('/path/to/some/directory/')
 
 # Install a dependency into a particular directory and persist it to the package.json file
-stderr, stdout = npm.install('/path/to/some/directory/', ('--save', 'some-package'))
+stderr, stdout = npm.install('/path/to/some/directory/', '--save', 'some-package')
+
+# Install dependencies but suppress NPM's output
+stderr, stdout = npm.install('/path/to/some/directory/', silent=False)
 ```
 
 ### django_node.npm.run()

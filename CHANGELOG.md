@@ -1,6 +1,13 @@
 Changelog
 =========
 
+### 2.0.0 (12/12/2014)
+
+API change for `django_node.npm.install`
+
+Extra arguments are now accepted as `*args`, rather than as a tuple.
+`silent` must now be an explicit keyword argument.
+
 ### 1.0.0 (12/12/2014)
 
 Removed the `RAISE_ON_MISSING_DEPENDENCIES` and `RAISE_ON_OUTDATED_DEPENDENCIES` settings.
