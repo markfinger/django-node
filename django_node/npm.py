@@ -73,7 +73,7 @@ def install(target_dir, *args, **kwargs):
     stderr, stdout = npm.install('/path/to/some/directory/', '--save', 'some-package')
 
     # Install dependencies but suppress NPM's output
-    stderr, stdout = npm.install('/path/to/some/directory/', silent=False)
+    stderr, stdout = npm.install('/path/to/some/directory/', silent=True)
     ```
     """
 
