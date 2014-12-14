@@ -1,4 +1,4 @@
 include CHANGELOG.md
 include LICENSE.txt
 include README.md
-include django_node/tests/package.json
+include requirements.txt
