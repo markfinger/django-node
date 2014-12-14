@@ -256,5 +256,7 @@ Running the tests
 -----------------
 
 ```bash
+mkvirtualenv django-node
+pip install -r requirements.txt
 python django_node/tests/runner.py
 ```

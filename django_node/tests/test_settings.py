@@ -1,3 +1,2 @@
-settings = {
-    'DEBUG': True,
-}
+DEBUG = True
+SECRET_KEY = '_'
