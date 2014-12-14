@@ -6,9 +6,11 @@ Bindings and utils for integrating Node.js and NPM into a Django application.
 ```python
 from django_node import node, npm
 
-node.run('/path/to/some/file.js', '--some-argument')
+# Run a particular file with Node.js
+stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
 
-npm.install('/path/to/some/directory')
+# Call `npm install` within a particular directory
+stderr, stdout = npm.install('/path/to/some/directory')
 ```
 
 Documentation
@@ -16,20 +18,20 @@ Documentation
 
 - [Installation](#installation)
 - [Node.js](#nodejs)
+  - [run()](#django_nodenoderun)
+  - [ensure_installed()](#django_nodenodeensure_installed)
+  - [ensure_version_gte()](#django_nodenodeensure_version_gte)
   - [is_installed](#django_nodenodeis_installed)
   - [version](#django_nodenodeversion)
   - [version_raw](#django_nodenodeversion_raw)
-  - [ensure_installed()](#django_nodenodeensure_installed)
-  - [ensure_version_gte()](#django_nodenodeensure_version_gte)
-  - [run()](#django_nodenoderun)
 - [NPM](#npm)
+  - [install()](#django_nodenpminstall)
+  - [run()](#django_nodenpmrun)
+  - [ensure_installed()](#django_nodenpmensure_installed)
+  - [ensure_version_gte()](#django_nodenpmensure_version_gte)
   - [is_installed](#django_nodenpmis_installed)
   - [version](#django_nodenpmversion)
   - [version_raw](#django_nodenpmversion_raw)
-  - [ensure_installed()](#django_nodenpmensure_installed)
-  - [ensure_version_gte()](#django_nodenpmensure_version_gte)
-  - [install()](#django_nodenpminstall)
-  - [run()](#django_nodenpmrun)
 - [Settings](#settings)
   - [PATH_TO_NODE](#django_nodepath_to_node)
   - [NODE_VERSION_COMMAND](#django_nodenode_version_command)
@@ -54,19 +56,17 @@ pip install django-node
 Node.js
 -------
 
-The `django_node.node` module provides utils for introspecting and invoking Node.js.
+The `django_node.node` module provides utils for introspecting and calling Node.js.
 
-### django_node.node.is_installed
+### django_node.node.run()
 
-A boolean indicating if Node.js is installed.
+A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
 
-### django_node.node.version
+```python
+from django_node import node
 
-A tuple containing the version of Node.js installed. For example, `(0, 10, 33)`
-
-### django_node.node.version_raw
-
-A string containing the raw version returned from Node.js. For example, `'v0.10.33'`
+stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
+```
 
 ### django_node.node.ensure_installed()
 
@@ -89,33 +89,57 @@ node_version_required = (0, 10, 0)
 node.ensure_version_gte(node_version_required)
 ```
 
-### django_node.node.run()
+### django_node.node.is_installed
 
-A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
+A boolean indicating if Node.js is installed.
 
-```python
-from django_node import node
+### django_node.node.version
 
-stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
-```
+A tuple containing the version of Node.js installed. For example, `(0, 10, 33)`
+
+### django_node.node.version_raw
+
+A string containing the raw version returned from Node.js. For example, `'v0.10.33'`
 
 
 NPM
 ---
 
-The `django_node.npm` module provides utils for introspecting and invoking NPM.
+The `django_node.npm` module provides utils for introspecting and calling NPM.
 
-### django_node.npm.is_installed
+### django_node.npm.install()
 
-A boolean indicating if NPM is installed.
+A method that will invoke `npm install` in a specified directory. Optional arguments will be
+appended to the invoked command.
 
-### django_node.npm.version
+Arguments:
 
-A tuple containing the version of NPM installed. For example, `(2, 0, 0)`
+- `target_dir`: a string pointing to the directory which the command will be invoked in.
+- `arguments`: an optional tuple of strings to append to the invoked command.
+- `silent`: an optional boolean indicating that NPM's output should not be printed to the terminal.
 
-### django_node.npm.version_raw
+```python
+from django_node import npm
 
-A string containing the raw version returned from NPM. For example, `'2.0.0'`
+# Install the dependencies in a particular directory
+stderr, stdout = npm.install('/path/to/some/directory/')
+
+# Install a dependency into a particular directory and persist it to the package.json file
+stderr, stdout = npm.install('/path/to/some/directory/', '--save', 'some-package')
+
+# Install dependencies but prevent NPM's output from being logged to the terminal
+stderr, stdout = npm.install('/path/to/some/directory/', silent=True)
+```
+
+### django_node.npm.run()
+
+A method which will invoke NPM with the arguments provided and return the resulting stderr and stdout.
+
+```python
+from django_node import npm
+
+stderr, stdout = npm.run('install', '--save', 'some-package')
+```
 
 ### django_node.npm.ensure_installed()
 
@@ -138,39 +162,17 @@ npm_version_required = (2, 0, 0)
 npm.ensure_version_gte(npm_version_required)
 ```
 
-### django_node.npm.install()
+### django_node.npm.is_installed
 
-A method that will invoke `npm install` in a specified directory. Optional arguments will be
-appended to the invoked command.
+A boolean indicating if NPM is installed.
 
-Arguments:
+### django_node.npm.version
 
-- `target_dir`: a string pointing to the directory which the command will be invoked in.
-- `arguments`: an optional tuple of strings to append to the invoked command.
-- `silent`: an optional boolean indicating that NPM's output should not be printed to the terminal.
+A tuple containing the version of NPM installed. For example, `(2, 0, 0)`
 
-```python
-from django_node import npm
+### django_node.npm.version_raw
 
-# Install the dependencies in a particular directory
-stderr, stdout = npm.install('/path/to/some/directory/')
-
-# Install a dependency into a particular directory and persist it to the package.json file
-stderr, stdout = npm.install('/path/to/some/directory/', '--save', 'some-package')
-
-# Install dependencies but suppress NPM's output
-stderr, stdout = npm.install('/path/to/some/directory/', silent=True)
-```
-
-### django_node.npm.run()
-
-A method which will invoke NPM with the arguments provided and return the resulting stderr and stdout.
-
-```python
-from django_node import npm
-
-stderr, stdout = npm.run('install', '--save', 'some-package')
-```
+A string containing the raw version returned from NPM. For example, `'2.0.0'`
 
 
 Settings
