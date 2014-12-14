@@ -112,8 +112,8 @@ def install(target_dir, *args, **kwargs):
     if stdout and not silent:
         print('-' * 80)
         print(
-            'Output from `{command}` in {target_dir}'.format(
-                command=' '.join((settings.PATH_TO_NPM,) + args),
+            'Output from running `{command}` in {target_dir}'.format(
+                command=' '.join((settings.PATH_TO_NPM, settings.NPM_INSTALL_COMMAND,) + args),
                 target_dir=target_dir,
             )
         )
