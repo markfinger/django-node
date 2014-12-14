@@ -176,7 +176,7 @@ stderr, stdout = npm.run('install', '--save', 'some-package')
 Settings
 --------
 
-Settings can be overridden by defining a dictionary name `DJANGO_NODE` in your settings file.
+Settings can be overridden by defining a dictionary named `DJANGO_NODE` in your settings file.
 
 ```python
 # Example
