@@ -62,10 +62,16 @@ The `django_node.node` module provides utils for introspecting and calling Node.
 
 A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
 
-```python
+Accepts an optional keyword argument, `production`, which will the command with the
+NODE_ENV environment variable set to 'production'.
+
+```
 from django_node import node
 
 stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
+
+# With NODE_ENV set to production
+stderr, stdout = node.run('/path/to/some/file.js', '--some-argument', production=True)
 ```
 
 ### django_node.node.ensure_installed()

@@ -1,3 +1,4 @@
+import os
 import settings
 import utils
 
@@ -34,17 +35,37 @@ def ensure_version_gte(required_version):
     utils.raise_if_dependency_version_less_than(utils.NODE_NAME, required_version)
 
 
-def run(*args):
+def run(*args, **kwargs):
     """
     A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
+
+    Accepts an optional keyword argument, `production`, which will the command with the
+    NODE_ENV environment variable set to 'production'.
 
     ```
     from django_node import node
 
     stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
+
+    # With NODE_ENV set to production
+    stderr, stdout = node.run('/path/to/some/file.js', '--some-argument', production=True)
     ```
     """
     ensure_installed()
-    return utils.run_command(
+
+    production = kwargs.pop('production', None)
+    if production:
+        node_env = os.environ.get('NODE_ENV', None)
+        os.environ['NODE_ENV'] = 'production'
+
+    results = utils.run_command(
         (settings.PATH_TO_NODE,) + tuple(args)
     )
+
+    if production:
+        if node_env is not None:
+            os.environ['NODE_ENV'] = node_env
+        else:
+            del os.environ['NODE_ENV']
+
+    return results
