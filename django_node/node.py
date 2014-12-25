@@ -39,8 +39,8 @@ def run(*args, **kwargs):
     """
     A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
 
-    Accepts an optional keyword argument, `production`, which will the command with the
-    NODE_ENV environment variable set to 'production'.
+    Accepts an optional keyword argument, `production`, which will ensure that the command is run
+    with the `NODE_ENV` environment variable set to 'production'.
 
     ```
     from django_node import node
