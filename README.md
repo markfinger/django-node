@@ -121,7 +121,7 @@ appended to the invoked command.
 Arguments:
 
 - `target_dir`: a string pointing to the directory which the command will be invoked in.
-- `arguments`: an optional tuple of strings to append to the invoked command.
+- `*args`: optional strings to append to the invoked command.
 - `silent`: an optional boolean indicating that NPM's output should not be printed to the terminal.
 
 ```python
