@@ -18,7 +18,7 @@ NODE_VERSION_FILTER = setting_overrides.get(
 )
 
 PATH_TO_NPM = setting_overrides.get(
-    'PATH_TO_NODE',
+    'PATH_TO_NPM',
     'npm'
 )
 
