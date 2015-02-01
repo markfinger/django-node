@@ -40,8 +40,6 @@ Documentation
   - [NPM_VERSION_COMMAND](#django_nodenpm_version_command)
   - [NPM_VERSION_FILTER](#django_nodenpm_version_filter)
   - [NPM_INSTALL_COMMAND](#django_nodenpm_install_command)
-  - [RAISE_ON_MISSING_DEPENDENCIES](#django_noderaise_on_missing_dependencies)
-  - [RAISE_ON_OUTDATED_DEPENDENCIES](#django_noderaise_on_outdated_dependencies)
 - [Running the tests](#running-the-tests)
 
 
