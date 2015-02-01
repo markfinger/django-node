@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 import json
+import six
 from django_node import node, npm
 from django_node.exceptions import OutdatedDependency, MalformedVersionInput
 
@@ -37,7 +38,7 @@ class TestDjangoNode(unittest.TestCase):
         self.assertTrue(node.is_installed)
 
     def test_node_version_raw(self):
-        self.assertTrue(isinstance(node.version_raw, basestring))
+        self.assertTrue(isinstance(node.version_raw, six.string_types))
         self.assertGreater(len(node.version_raw), 0)
 
     def test_node_version(self):
@@ -48,7 +49,7 @@ class TestDjangoNode(unittest.TestCase):
         self.assertTrue(npm.is_installed)
 
     def test_npm_version_raw(self):
-        self.assertTrue(isinstance(npm.version_raw, basestring))
+        self.assertTrue(isinstance(npm.version_raw, six.string_types))
         self.assertGreater(len(npm.version_raw), 0)
 
     def test_npm_version(self):

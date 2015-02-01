@@ -1,7 +1,7 @@
 import os
-import settings
-import exceptions
-import utils
+from . import settings
+from . import exceptions
+from . import utils
 
 is_installed = utils.npm_installed
 version = utils.npm_version

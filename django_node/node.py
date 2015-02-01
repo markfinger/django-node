@@ -1,6 +1,6 @@
 import os
-import settings
-import utils
+from . import settings
+from . import utils
 
 is_installed = utils.node_installed
 version = utils.node_version

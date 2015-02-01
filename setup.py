@@ -7,9 +7,12 @@ setup(
     version=VERSION,
     packages=['django_node'],
     package_data={
-        'django_node': []
+        'django_node': [],
     },
-    install_requires=['django'],
+    install_requires=[
+        'django'
+        'six >= 1.9.0'
+    ],
     description='Bindings and utils for integrating Node.js and NPM into a Django application',
     long_description='Documentation at https://github.com/markfinger/django-node',
     author='Mark Finger',

@@ -1,7 +1,8 @@
 import subprocess
 import tempfile
-import settings
-import exceptions
+import six
+from . import settings
+from . import exceptions
 
 
 def run_command(cmd_to_run):
@@ -21,7 +22,14 @@ def run_command(cmd_to_run):
         stderr_file.seek(0)
         stdout_file.seek(0)
 
-        return stderr_file.read(), stdout_file.read()
+        stderr = stderr_file.read()
+        stdout = stdout_file.read()
+
+        if six.PY3:
+            stderr = stderr.decode()
+            stdout = stdout.decode()
+
+        return stderr, stdout
 
 
 def _interrogate(cmd_to_run, version_filter):
@@ -72,7 +80,7 @@ def _validate_version_iterable(version):
             'Versions must have three numbers defined. Received {0}'.format(version)
         )
     for number in version:
-        if not isinstance(number, (int, long,)):
+        if not isinstance(number, six.integer_types):
             raise exceptions.MalformedVersionInput(
                 'Versions can only contain number. Received {0}'.format(version)
             )
@@ -89,7 +97,7 @@ def _check_if_version_is_outdated(current_version, required_version):
 
 
 def _format_version(version):
-    return '.'.join(map(unicode, version))
+    return '.'.join(map(six.text_type, version))
 
 
 def raise_if_dependency_missing(application, required_version=None):
