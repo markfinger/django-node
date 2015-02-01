@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 import json
-import six
+from django.utils import six
 from django_node import node, npm
 from django_node.exceptions import OutdatedDependency, MalformedVersionInput
 

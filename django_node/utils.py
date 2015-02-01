@@ -1,6 +1,6 @@
 import subprocess
 import tempfile
-import six
+from django.utils import six
 from . import settings
 from . import exceptions
 
