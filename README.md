@@ -257,6 +257,20 @@ Default
 'install'
 ```
 
+### DJANGO_NODE['NPM_INSTALL_PATH_TO_PYTHON']
+
+A path to a python interpreter which will be provided by NPM to any dependencies which require
+Python.
+
+If you are using Python 3 as your system default or virtualenv `python`, NPM may throw errors
+while installing certain libraries - such as `gyp` - which depend on Python 2.x. Specifying a
+path to a Python 2.x interpreter should resolve these errors.
+
+Default
+```python
+None
+```
+
 
 Running the tests
 -----------------

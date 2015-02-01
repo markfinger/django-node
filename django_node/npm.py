@@ -47,9 +47,10 @@ def run(*args):
     ```
     """
     ensure_installed()
-    return utils.run_command(
-        (settings.PATH_TO_NPM,) + tuple(args)
-    )
+    command = (settings.PATH_TO_NPM,) + tuple(args)
+    if settings.NPM_INSTALL_PATH_TO_PYTHON:
+        command += ('--python={path_to_python}'.format(path_to_python=settings.NPM_INSTALL_PATH_TO_PYTHON),)
+    return utils.run_command(command)
 
 
 def install(target_dir, *args, **kwargs):

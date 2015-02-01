@@ -36,3 +36,8 @@ NPM_INSTALL_COMMAND = setting_overrides.get(
     'NPM_INSTALL_COMMAND',
     'install',
 )
+
+NPM_INSTALL_PATH_TO_PYTHON = setting_overrides.get(
+    'NPM_INSTALL_PATH_TO_PYTHON',
+    None,
+)
