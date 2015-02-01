@@ -10,8 +10,8 @@ setup(
         'django_node': [],
     },
     install_requires=[
-        'django'
-        'six >= 1.9.0'
+        'django',
+        'six >= 1.9.0',
     ],
     description='Bindings and utils for integrating Node.js and NPM into a Django application',
     long_description='Documentation at https://github.com/markfinger/django-node',
