@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = '2.2.1'
+VERSION = '2.3.0'
 
 setup(
     name='django-node',
