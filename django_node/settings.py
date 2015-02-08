@@ -2,6 +2,16 @@ from django.conf import settings
 
 setting_overrides = getattr(settings, 'DJANGO_NODE', {})
 
+NODE_VERSION_REQUIRED = setting_overrides.get(
+    'NODE_VERSION_REQUIRED',
+    (0, 10, 25)
+)
+
+NPM_VERSION_REQUIRED = setting_overrides.get(
+    'NPM_VERSION_REQUIRED',
+    (2, 0, 0)
+)
+
 PATH_TO_NODE = setting_overrides.get(
     'PATH_TO_NODE',
     'node'
@@ -40,4 +50,14 @@ NPM_INSTALL_COMMAND = setting_overrides.get(
 NPM_INSTALL_PATH_TO_PYTHON = setting_overrides.get(
     'NPM_INSTALL_PATH_TO_PYTHON',
     None,
+)
+
+SERVER = setting_overrides.get(
+    'SERVER',
+    'django_node.server.get_server',
+)
+
+SERVER_DEBUG = setting_overrides.get(
+    'SERVER_DEBUG',
+    False,
 )

@@ -4,7 +4,8 @@ import unittest
 import json
 from django.utils import six
 from django_node import node, npm
-from django_node.exceptions import OutdatedDependency, MalformedVersionInput
+from django_node.server import get_server, NodeServer
+from django_node.exceptions import OutdatedDependency, MalformedVersionInput, NodeServerError
 
 TEST_DIR = os.path.abspath(os.path.dirname(__file__))
 PATH_TO_NODE_MODULES = os.path.join(TEST_DIR, 'node_modules')
@@ -13,18 +14,10 @@ PATH_TO_INSTALLED_PACKAGE = os.path.join(PATH_TO_NODE_MODULES, DEPENDENCY_PACKAG
 PACKAGE_TO_INSTALL = 'jquery'
 PATH_TO_PACKAGE_TO_INSTALL = os.path.join(PATH_TO_NODE_MODULES, PACKAGE_TO_INSTALL)
 PATH_TO_PACKAGE_JSON = os.path.join(TEST_DIR, 'package.json')
+TEST_ENDPOINT_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'test-endpoint.js')
 
 
 class TestDjangoNode(unittest.TestCase):
-    package_json_contents = ''
-
-    def read_package_json(self):
-        with open(PATH_TO_PACKAGE_JSON, 'r') as package_json_file:
-            return package_json_file.read()
-
-    def write_package_json(self, contents):
-        with open(PATH_TO_PACKAGE_JSON, 'w+') as package_json_file:
-            package_json_file.write(contents)
 
     def setUp(self):
         self.package_json_contents = self.read_package_json()
@@ -33,6 +26,16 @@ class TestDjangoNode(unittest.TestCase):
         if os.path.exists(PATH_TO_NODE_MODULES):
             shutil.rmtree(PATH_TO_NODE_MODULES)
         self.write_package_json(self.package_json_contents)
+        server = get_server()
+        server.stop()
+
+    def read_package_json(self):
+        with open(PATH_TO_PACKAGE_JSON, 'r') as package_json_file:
+            return package_json_file.read()
+
+    def write_package_json(self, contents):
+        with open(PATH_TO_PACKAGE_JSON, 'w+') as package_json_file:
+            package_json_file.write(contents)
 
     def test_node_is_installed(self):
         self.assertTrue(node.is_installed)
@@ -120,3 +123,51 @@ class TestDjangoNode(unittest.TestCase):
         package_json_contents = self.read_package_json()
         package_json = json.loads(package_json_contents)
         self.assertIn('jquery', package_json['dependencies'])
+
+    def test_node_server_can_start_and_stop(self):
+        server = get_server()
+        self.assertIsInstance(server, NodeServer)
+        server.start()
+        self.assertTrue(server.has_started)
+        self.assertFalse(server.has_stopped)
+        self.assertTrue(server.test())
+        server.stop()
+        self.assertFalse(server.has_started)
+        self.assertTrue(server.has_stopped)
+        self.assertFalse(server.test())
+        server.start()
+        self.assertTrue(server.has_started)
+        self.assertFalse(server.has_stopped)
+        self.assertTrue(server.test())
+        server.stop()
+        self.assertFalse(server.has_started)
+        self.assertTrue(server.has_stopped)
+        self.assertFalse(server.test())
+
+    def test_node_server_can_register_an_endpoint(self):
+        server = get_server()
+        test_endpoint = '/__registered-test-endpoint__'
+        server.register(test_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        expected_output = 'NodeServer test-endpoint'
+        response = server.get(test_endpoint, params={
+            'output': expected_output
+        })
+        self.assertEqual(response.text, expected_output)
+
+    def test_node_server_cannot_register_an_endpoint_without_an_opening_slash(self):
+        server = get_server()
+        malformed_endpoint = 'malformed_endpoint'
+        self.assertRaises(NodeServerError, server.register, malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        server.register('/' + malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+
+    def test_node_server_cannot_register_an_endpoint_twice(self):
+        server = get_server()
+        endpoint = '/test-endpoint'
+        server.register(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertRaises(NodeServerError, server.register, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+
+    def test_node_server_cannot_register_certain_endpoints(self):
+        server = get_server()
+        blacklisted_endpoints = ('', '*', '/', server._test_endpoint, server._register_endpoint)
+        for endpoint in blacklisted_endpoints:
+            self.assertRaises(NodeServerError, server.register, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)

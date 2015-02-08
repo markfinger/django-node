@@ -20,3 +20,27 @@ class NpmInstallError(Exception):
 
 class NpmInstallArgumentsError(Exception):
     pass
+
+
+class DynamicImportError(Exception):
+    pass
+
+
+class ServerInterfaceMissingEndpoints(Exception):
+    pass
+
+
+class NodeServerStartError(Exception):
+    pass
+
+
+class NodeServerConnectionError(Exception):
+    pass
+
+
+class NodeServerError(Exception):
+    pass
+
+
+class EndpointRegistrationError(Exception):
+    pass

@@ -1,8 +1,13 @@
 import subprocess
 import tempfile
+import importlib
 from django.utils import six
-from . import settings
-from . import exceptions
+from .settings import (
+    PATH_TO_NODE, PATH_TO_NPM, NODE_VERSION_COMMAND, NODE_VERSION_FILTER, NPM_VERSION_COMMAND, NPM_VERSION_FILTER,
+)
+from .exceptions import (
+    DynamicImportError, ErrorInterrogatingEnvironment, MalformedVersionInput, MissingDependency, OutdatedDependency,
+)
 
 
 def run_command(cmd_to_run):
@@ -36,7 +41,7 @@ def _interrogate(cmd_to_run, version_filter):
     try:
         stderr, stdout = run_command(cmd_to_run)
         if stderr:
-            raise exceptions.ErrorInterrogatingEnvironment(stderr)
+            raise ErrorInterrogatingEnvironment(stderr)
         installed = True
         version_raw = stdout.strip()
     except OSError:
@@ -49,12 +54,12 @@ def _interrogate(cmd_to_run, version_filter):
 
 # Interrogate the system
 node_installed, node_version, node_version_raw = _interrogate(
-    (settings.PATH_TO_NODE, settings.NODE_VERSION_COMMAND,),
-    settings.NODE_VERSION_FILTER,
+    (PATH_TO_NODE, NODE_VERSION_COMMAND,),
+    NODE_VERSION_FILTER,
 )
 npm_installed, npm_version, npm_version_raw = _interrogate(
-    (settings.PATH_TO_NPM, settings.NPM_VERSION_COMMAND,),
-    settings.NPM_VERSION_FILTER,
+    (PATH_TO_NPM, NPM_VERSION_COMMAND,),
+    NPM_VERSION_FILTER,
 )
 
 _missing_dependency_error_message = '{application} is not installed or cannot be found at path "{path}".'
@@ -72,16 +77,16 @@ NODE_NAME = 'Node.js'
 
 def _validate_version_iterable(version):
     if not isinstance(version, tuple):
-        raise exceptions.MalformedVersionInput(
+        raise MalformedVersionInput(
             'Versions must be tuples. Received {0}'.format(version)
         )
     if len(version) < 3:
-        raise exceptions.MalformedVersionInput(
+        raise MalformedVersionInput(
             'Versions must have three numbers defined. Received {0}'.format(version)
         )
     for number in version:
         if not isinstance(number, six.integer_types):
-            raise exceptions.MalformedVersionInput(
+            raise MalformedVersionInput(
                 'Versions can only contain number. Received {0}'.format(version)
             )
 
@@ -103,10 +108,10 @@ def _format_version(version):
 def raise_if_dependency_missing(application, required_version=None):
     if application == NPM_NAME:
         is_installed = npm_installed
-        path = settings.PATH_TO_NPM
+        path = PATH_TO_NPM
     else:
         is_installed = node_installed
-        path = settings.PATH_TO_NODE
+        path = PATH_TO_NODE
     if not is_installed:
         error = _missing_dependency_error_message.format(
             application=application,
@@ -116,7 +121,7 @@ def raise_if_dependency_missing(application, required_version=None):
             error += _version_required_error_message.format(
                 required_version=_format_version(required_version)
             )
-        raise exceptions.MissingDependency(error)
+        raise MissingDependency(error)
 
 
 def raise_if_dependency_version_less_than(application, required_version):
@@ -125,10 +130,22 @@ def raise_if_dependency_version_less_than(application, required_version):
     else:
         current_version = node_version
     if _check_if_version_is_outdated(current_version, required_version):
-        raise exceptions.OutdatedDependency(
+        raise OutdatedDependency(
             _outdated_version_error_message.format(
                 application=application,
                 current_version=_format_version(current_version),
                 required_version=_format_version(required_version),
             )
         )
+    
+
+def dynamic_import(import_path):
+    module_import_path = '.'.join(import_path.split('.')[:-1])
+    try:
+        imported_module = importlib.import_module(module_import_path)
+        imported_object = getattr(imported_module, import_path.split('.')[-1])
+    except (ImportError, AttributeError):
+        raise DynamicImportError('Failed to import "{import_path}"'.format(
+            import_path=import_path
+        ))
+    return imported_object
