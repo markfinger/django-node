@@ -40,6 +40,7 @@ Documentation
   - [NPM_VERSION_COMMAND](#django_nodenpm_version_command)
   - [NPM_VERSION_FILTER](#django_nodenpm_version_filter)
   - [NPM_INSTALL_COMMAND](#django_nodenpm_install_command)
+  - [NPM_INSTALL_PATH_TO_PYTHON](#django_nodenpm_install_path_to_python)
 - [Running the tests](#running-the-tests)
 
 
