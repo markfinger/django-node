@@ -1,18 +1,21 @@
 import os
-from . import settings
-from . import exceptions
-from . import utils
+from .exceptions import NpmInstallArgumentsError, NpmInstallError
+from .settings import PATH_TO_NPM, NPM_INSTALL_PATH_TO_PYTHON, NPM_INSTALL_COMMAND
+from .utils import (
+    NPM_NAME, npm_installed, npm_version, npm_version_raw, raise_if_dependency_missing,
+    raise_if_dependency_version_less_than, run_command
+)
 
-is_installed = utils.npm_installed
-version = utils.npm_version
-version_raw = utils.npm_version_raw
+is_installed = npm_installed
+version = npm_version
+version_raw = npm_version_raw
 
 
 def ensure_installed():
     """
     A method which will raise an exception if NPM is not installed.
     """
-    utils.raise_if_dependency_missing(utils.NPM_NAME)
+    raise_if_dependency_missing(NPM_NAME)
 
 
 def ensure_version_gte(required_version):
@@ -33,7 +36,7 @@ def ensure_version_gte(required_version):
     ```
     """
     ensure_installed()
-    utils.raise_if_dependency_version_less_than(utils.NPM_NAME, required_version)
+    raise_if_dependency_version_less_than(NPM_NAME, required_version)
 
 
 def run(*args):
@@ -47,10 +50,10 @@ def run(*args):
     ```
     """
     ensure_installed()
-    command = (settings.PATH_TO_NPM,) + tuple(args)
-    if settings.NPM_INSTALL_PATH_TO_PYTHON:
-        command += ('--python={path_to_python}'.format(path_to_python=settings.NPM_INSTALL_PATH_TO_PYTHON),)
-    return utils.run_command(command)
+    command = (PATH_TO_NPM,) + tuple(args)
+    if NPM_INSTALL_PATH_TO_PYTHON:
+        command += ('--python={path_to_python}'.format(path_to_python=NPM_INSTALL_PATH_TO_PYTHON),)
+    return run_command(command)
 
 
 def install(target_dir, *args, **kwargs):
@@ -79,12 +82,12 @@ def install(target_dir, *args, **kwargs):
     """
 
     if not isinstance(target_dir, str):
-        raise exceptions.NpmInstallArgumentsError(
+        raise NpmInstallArgumentsError(
             'npm.install\'s `target_dir` parameter must be either a str or unicode. Received: {0}'.format(target_dir)
         )
 
     if not os.path.exists(target_dir) or not os.path.isdir(target_dir):
-        raise exceptions.NpmInstallArgumentsError(
+        raise NpmInstallArgumentsError(
             'npm.install\'s `target_dir` parameter must be a string pointing to a directory. Received: {0}'.format(
                 target_dir
             )
@@ -100,7 +103,7 @@ def install(target_dir, *args, **kwargs):
 
     os.chdir(target_dir)
 
-    stderr, stdout = run(settings.NPM_INSTALL_COMMAND, *args)
+    stderr, stdout = run(NPM_INSTALL_COMMAND, *args)
 
     if stderr:
         for line in stderr.splitlines():
@@ -108,13 +111,13 @@ def install(target_dir, *args, **kwargs):
                 print(line)
             else:
                 os.chdir(origin_dir)
-                raise exceptions.NpmInstallError(stderr)
+                raise NpmInstallError(stderr)
 
     if stdout and not silent:
         print('-' * 80)
         print(
             'Output from running `{command}` in {target_dir}'.format(
-                command=' '.join((settings.PATH_TO_NPM, settings.NPM_INSTALL_COMMAND,) + args),
+                command=' '.join((PATH_TO_NPM, NPM_INSTALL_COMMAND,) + args),
                 target_dir=target_dir,
             )
         )

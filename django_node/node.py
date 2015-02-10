@@ -1,17 +1,20 @@
 import os
-from . import settings
-from . import utils
+from .settings import PATH_TO_NODE
+from .utils import (
+    node_installed, node_version_raw, raise_if_dependency_missing, NODE_NAME, node_version,
+    raise_if_dependency_version_less_than, run_command,
+)
 
-is_installed = utils.node_installed
-version = utils.node_version
-version_raw = utils.node_version_raw
+is_installed = node_installed
+version = node_version
+version_raw = node_version_raw
 
 
 def ensure_installed():
     """
     A method which will raise an exception if Node.js is not installed.
     """
-    utils.raise_if_dependency_missing(utils.NODE_NAME)
+    raise_if_dependency_missing(NODE_NAME)
 
 
 def ensure_version_gte(required_version):
@@ -32,7 +35,7 @@ def ensure_version_gte(required_version):
     ```
     """
     ensure_installed()
-    utils.raise_if_dependency_version_less_than(utils.NODE_NAME, required_version)
+    raise_if_dependency_version_less_than(NODE_NAME, required_version)
 
 
 def run(*args, **kwargs):
@@ -58,8 +61,8 @@ def run(*args, **kwargs):
         node_env = os.environ.get('NODE_ENV', None)
         os.environ['NODE_ENV'] = 'production'
 
-    results = utils.run_command(
-        (settings.PATH_TO_NODE,) + tuple(args)
+    results = run_command(
+        (PATH_TO_NODE,) + tuple(args)
     )
 
     if production:
