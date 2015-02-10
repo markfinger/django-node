@@ -2,42 +2,27 @@ var http = require('http');
 var fs = require('fs');
 var argv = require('yargs').argv;
 var express = require('express');
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
 
-var address = argv.address;
-if (address === undefined) {
-	throw new Error('No address was provided, ex: `--address 127.0.0.1`');
-}
+var getArg = function(arg, example) {
+	var value = argv[arg];
+	if (value === undefined) {
+		var message = 'Missing argument "' + arg + '".';
+		if (example) {
+			message += ' Example: ' + example;
+		}
+		throw new Error(message);
+	}
+	return value;
+};
 
-var port = argv.port;
-if (port === undefined) {
-	throw new Error('No port was provided, ex: `--port 0`');
-}
-
-var expectedStartupOutput = argv.expectedStartupOutput;
-if (expectedStartupOutput === undefined) {
-	throw new Error('No expected startup output was provided, ex: `--expected-startup-output "server has started"`');
-}
-
-var testEndpoint = argv.testEndpoint;
-if (testEndpoint === undefined) {
-	throw new Error('No test endpoint was provided, ex: `--test-endpoint "/__test__"`');
-}
-
-var expectedTestOutput = argv.expectedTestOutput;
-if (expectedTestOutput === undefined) {
-	throw new Error('No expected test output was provided, ex: `--expected-test-output "server has started"`');
-}
-
-var registerEndpoint = argv.registerEndpoint;
-if (registerEndpoint === undefined) {
-	throw new Error('No register endpoint was provided, ex: `--register-endpoint "/__register__"`');
-}
-
-var expectedRegisterOutput = argv.expectedRegisterOutput;
-if (expectedRegisterOutput === undefined) {
-	throw new Error('No expected register output was provided, ex: `--expected-register-output "Registered endpoint"`');
-}
+var address = getArg('address', '--address 127.0.0.1');
+var port = getArg('port', '--port 0');
+var expectedStartupOutput = getArg('expectedStartupOutput', '--expected-startup-output "server has started"');
+var testEndpoint = getArg('testEndpoint', '--test-endpoint "/__test__"');
+var expectedTestOutput = getArg('expectedTestOutput', '--expected-test-output "server has started"');
+var addEndpoint = getArg('addEndpoint', '--add-endpoint "/__register__"');
+var expectedAddOutput = getArg('expectedAddOutput', '--expected-add-output "Registered endpoint"');
 
 var app = express();
 
@@ -50,50 +35,50 @@ var server = app.listen(port, address, function() {
 	console.log(output);
 });
 
-var _registeredEndpoints = {};
+var _endpointsAdded = {};
 
-app.get('/', function(req, res) {
-	var output = 'django-node NodeServer'
+app.all('/', function(req, res) {
+	var output = '<h1>django-node NodeServer</h1>';
 	output += '<br><br>';
-	output += 'Registered endpoints..';
+	output += '<h2>Registered endpoints</h2>';
 	output += '<ul>';
-	Object.keys(_registeredEndpoints).forEach(function(endpoint) {
+	Object.keys(_endpointsAdded).forEach(function(endpoint) {
 		output += '<li>' + endpoint + '<li>';
 	});
 	output += '</ul>';
 	res.send(output);
 });
 
-app.get(testEndpoint, function(req, res) {
+app.all(testEndpoint, function(req, res) {
 	res.send(expectedTestOutput);
 });
 
-app.post(registerEndpoint, function(req, res) {
+app.post(addEndpoint, function(req, res) {
 	var endpoint = req.body.endpoint;
 	var pathToSource = req.body.path_to_source;
 
 	if (!endpoint) {
 		throw new Error('Malformed endpoint provided. Received "' + endpoint + '"');
 	}
-	if (['/', testEndpoint, registerEndpoint].indexOf(endpoint) !== -1) {
-		throw new Error('Endpoint "' + endpoint + '" cannot be registered');
+	if (['/', testEndpoint, addEndpoint].indexOf(endpoint) !== -1) {
+		throw new Error('Endpoint "' + endpoint + '" cannot be added');
 	}
 	if (endpoint[0] !== '/') {
-		throw new Error('Endpoints must start with a forward-slash, trying to register "' + endpoint + '"');
+		throw new Error('Endpoints must start with a forward-slash, cannot add "' + endpoint + '"');
 	}
-	if (_registeredEndpoints[endpoint] !== undefined) {
-		throw new Error('Endpoint "' + endpoint + '" has already been registered as ' + _registeredEndpoints[endpoint]);
+	if (_endpointsAdded[endpoint] !== undefined) {
+		throw new Error('Endpoint "' + endpoint + '" has already been added as ' + _endpointsAdded[endpoint]);
 	}
 	if (!fs.existsSync(pathToSource)) {
 		throw new Error(
-			'Trying to register endpoint "' + endpoint + '" with source file "' + pathToSource +
-			'", but the specified file does not exist'
+			'Trying to add endpoint "' + endpoint + '" with source file "' + pathToSource + '", ' +
+			'but the specified file does not exist'
 		);
 	}
 
-	_registeredEndpoints[endpoint] = pathToSource;
+	_endpointsAdded[endpoint] = pathToSource;
 	var handler = require(pathToSource);
 	app.all(endpoint, handler);
 
-	res.send(expectedRegisterOutput);
+	res.send(expectedAddOutput);
 });

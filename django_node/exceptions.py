@@ -26,10 +26,6 @@ class DynamicImportError(Exception):
     pass
 
 
-class ServerInterfaceMissingEndpoints(Exception):
-    pass
-
-
 class NodeServerStartError(Exception):
     pass
 
@@ -42,5 +38,5 @@ class NodeServerError(Exception):
     pass
 
 
-class EndpointRegistrationError(Exception):
+class ErrorAddingEndpoint(Exception):
     pass

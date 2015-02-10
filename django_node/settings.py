@@ -54,7 +54,7 @@ NPM_INSTALL_PATH_TO_PYTHON = setting_overrides.get(
 
 SERVER = setting_overrides.get(
     'SERVER',
-    'django_node.server.get_server',
+    'django_node.node_server.NodeServer',
 )
 
 SERVER_DEBUG = setting_overrides.get(

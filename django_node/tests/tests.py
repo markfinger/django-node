@@ -4,7 +4,8 @@ import unittest
 import json
 from django.utils import six
 from django_node import node, npm
-from django_node.server import get_server, NodeServer
+from django_node.node_server import NodeServer, ServerEndpoint
+from django_node.server import server
 from django_node.exceptions import OutdatedDependency, MalformedVersionInput, NodeServerError
 
 TEST_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -26,7 +27,6 @@ class TestDjangoNode(unittest.TestCase):
         if os.path.exists(PATH_TO_NODE_MODULES):
             shutil.rmtree(PATH_TO_NODE_MODULES)
         self.write_package_json(self.package_json_contents)
-        server = get_server()
         server.stop()
 
     def read_package_json(self):
@@ -125,7 +125,6 @@ class TestDjangoNode(unittest.TestCase):
         self.assertIn('jquery', package_json['dependencies'])
 
     def test_node_server_can_start_and_stop(self):
-        server = get_server()
         self.assertIsInstance(server, NodeServer)
         server.start()
         self.assertTrue(server.has_started)
@@ -144,30 +143,35 @@ class TestDjangoNode(unittest.TestCase):
         self.assertTrue(server.has_stopped)
         self.assertFalse(server.test())
 
-    def test_node_server_can_register_an_endpoint(self):
-        server = get_server()
-        test_endpoint = '/__registered-test-endpoint__'
-        server.register(test_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+    def test_node_server_can_add_an_endpoint(self):
+        test_endpoint = '/__added-test-endpoint__'
+        server.add_endpoint(test_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
         expected_output = 'NodeServer test-endpoint'
         response = server.get(test_endpoint, params={
             'output': expected_output
         })
         self.assertEqual(response.text, expected_output)
 
-    def test_node_server_cannot_register_an_endpoint_without_an_opening_slash(self):
-        server = get_server()
+    def test_node_server_returns_a_server_endpoint_instance(self):
+        endpoint = server.add_endpoint('/__added-test-endpoint__', TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertIsInstance(endpoint, ServerEndpoint)
+        expected_output = 'NodeServer test-endpoint'
+        response = endpoint.get(params={
+            'output': expected_output
+        })
+        self.assertEqual(response.text, expected_output)
+
+    def test_node_server_cannot_add_an_endpoint_without_an_opening_slash(self):
         malformed_endpoint = 'malformed_endpoint'
-        self.assertRaises(NodeServerError, server.register, malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
-        server.register('/' + malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertRaises(NodeServerError, server.add_endpoint, malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        server.add_endpoint('/' + malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
 
-    def test_node_server_cannot_register_an_endpoint_twice(self):
-        server = get_server()
+    def test_node_server_cannot_add_an_endpoint_twice(self):
         endpoint = '/test-endpoint'
-        server.register(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
-        self.assertRaises(NodeServerError, server.register, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        server.add_endpoint(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertRaises(NodeServerError, server.add_endpoint, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
 
-    def test_node_server_cannot_register_certain_endpoints(self):
-        server = get_server()
-        blacklisted_endpoints = ('', '*', '/', server._test_endpoint, server._register_endpoint)
+    def test_node_server_cannot_add_certain_endpoints(self):
+        blacklisted_endpoints = ('', '*', '/', server._test_endpoint, server._add_endpoint)
         for endpoint in blacklisted_endpoints:
-            self.assertRaises(NodeServerError, server.register, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+            self.assertRaises(NodeServerError, server.add_endpoint, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
