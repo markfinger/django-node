@@ -16,6 +16,8 @@ def run_command(cmd_to_run):
     to temporary files. Using the temporary files gets around subprocess.PIPE's
     issues with handling large buffers.
 
+    Note: this command will block the python process until `cmd_to_run` has completed.
+
     Returns a tuple, containing the stderr and stdout as strings.
     """
     with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
