@@ -59,5 +59,5 @@ SERVER = setting_overrides.get(
 
 SERVER_DEBUG = setting_overrides.get(
     'SERVER_DEBUG',
-    False,
+    True,
 )

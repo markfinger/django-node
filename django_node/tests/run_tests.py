@@ -7,7 +7,7 @@ from django.test.utils import get_runner
 
 if __name__ == '__main__':
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'django_node.tests.test_settings'
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'django_node.tests.settings'
     django.setup()
     TestRunner = get_runner(settings)
     test_runner = TestRunner()

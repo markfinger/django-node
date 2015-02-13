@@ -38,5 +38,5 @@ class NodeServerError(Exception):
     pass
 
 
-class ErrorAddingEndpoint(Exception):
+class ErrorAddingService(Exception):
     pass

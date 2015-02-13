@@ -21,8 +21,8 @@ var port = getArg('port', '--port 0');
 var expectedStartupOutput = getArg('expectedStartupOutput', '--expected-startup-output "server has started"');
 var testEndpoint = getArg('testEndpoint', '--test-endpoint "/__test__"');
 var expectedTestOutput = getArg('expectedTestOutput', '--expected-test-output "server has started"');
-var addEndpoint = getArg('addEndpoint', '--add-endpoint "/__register__"');
-var expectedAddOutput = getArg('expectedAddOutput', '--expected-add-output "Registered endpoint"');
+var addServiceEndpoint = getArg('addServiceEndpoint', '--add-service-endpoint "/__add-service__"');
+var expectedAddServiceOutput = getArg('expectedAddServiceOutput', '--expected-add-service-output "Added service"');
 
 var app = express();
 
@@ -35,39 +35,40 @@ var server = app.listen(port, address, function() {
 	console.log(output);
 });
 
-var _endpointsAdded = {};
-
-app.all('/', function(req, res) {
-	var output = '<h1>django-node NodeServer</h1>';
-	output += '<br><br>';
-	output += '<h2>Registered endpoints</h2>';
-	output += '<ul>';
-	Object.keys(_endpointsAdded).forEach(function(endpoint) {
-		output += '<li>' + endpoint + '<li>';
+var getEndpoints = function() {
+	return app._router.stack.filter(function(obj) {
+		return obj.route !== undefined
+	}).map(function(obj) {
+		return obj.route.path
 	});
-	output += '</ul>';
-	res.send(output);
+};
+
+app.get('/', function(req, res) {
+	var endpoints = getEndpoints().map(function(endpoint) {
+		return '<li>' + endpoint + '</li>';
+	});
+	res.send('<h1>Endpoints</h1><ul>' + endpoints.join('') + '</ul>');
 });
 
-app.all(testEndpoint, function(req, res) {
+app.get(testEndpoint, function(req, res) {
 	res.send(expectedTestOutput);
 });
 
-app.post(addEndpoint, function(req, res) {
+app.post(addServiceEndpoint, function(req, res) {
 	var endpoint = req.body.endpoint;
 	var pathToSource = req.body.path_to_source;
 
 	if (!endpoint) {
-		throw new Error('Malformed endpoint provided. Received "' + endpoint + '"');
+		throw new Error('No endpoint provided');
 	}
-	if (['/', testEndpoint, addEndpoint].indexOf(endpoint) !== -1) {
+	if (['/', testEndpoint, addServiceEndpoint].indexOf(endpoint) !== -1) {
 		throw new Error('Endpoint "' + endpoint + '" cannot be added');
 	}
 	if (endpoint[0] !== '/') {
 		throw new Error('Endpoints must start with a forward-slash, cannot add "' + endpoint + '"');
 	}
-	if (_endpointsAdded[endpoint] !== undefined) {
-		throw new Error('Endpoint "' + endpoint + '" has already been added as ' + _endpointsAdded[endpoint]);
+	if (getEndpoints().indexOf(endpoint) !== -1) {
+		throw new Error('Endpoint "' + endpoint + '" has already been added');
 	}
 	if (!fs.existsSync(pathToSource)) {
 		throw new Error(
@@ -76,9 +77,10 @@ app.post(addEndpoint, function(req, res) {
 		);
 	}
 
-	_endpointsAdded[endpoint] = pathToSource;
 	var handler = require(pathToSource);
-	app.all(endpoint, handler);
+	app.get(endpoint, handler);
 
-	res.send(expectedAddOutput);
+	res.send(expectedAddServiceOutput);
 });
+
+module.exports = app;

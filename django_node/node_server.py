@@ -9,10 +9,10 @@ from requests.exceptions import ConnectionError
 from django.utils import six
 from . import node, npm
 from .settings import PATH_TO_NODE, SERVER_DEBUG, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED
-from .exceptions import NodeServerConnectionError, NodeServerStartError, NodeServerError, ErrorAddingEndpoint
+from .exceptions import NodeServerConnectionError, NodeServerStartError, NodeServerError, ErrorAddingService
 
 
-class ServerEndpoint(object):
+class Service(object):
     server = None
     endpoint = None
 
@@ -23,17 +23,14 @@ class ServerEndpoint(object):
     def get(self, params=None):
         return self.server.get(self.endpoint, params=params)
 
-    def post(self, data=None):
-        return self.server.post(self.endpoint, data=data)
-
 
 class NodeServer(object):
     """
     A persistent Node server which sits alongside the python process
     and responds over HTTP
     """
-    # TODO: replace the debug prints with django logger calls
 
+    # TODO: replace the debug prints with django logger calls
     debug = SERVER_DEBUG
     path_to_source = os.path.join(os.path.dirname(__file__), 'server.js')
     start_on_init = False
@@ -48,13 +45,13 @@ class NodeServer(object):
     has_stopped = False
 
     _test_endpoint = '/__test__'
-    _add_endpoint = '/__add__'
+    _add_service_endpoint = '/__add_service__'
 
     _expected_startup_output = 'Started NodeServer'
     _expected_test_output = 'NodeServer running {token}'.format(
         token=uuid.uuid4(),
     )
-    _expected_add_output = 'Added endpoint {token}'.format(
+    _expected_add_service_output = 'Added endpoint {token}'.format(
         token=uuid.uuid4(),
     )
 
@@ -76,13 +73,10 @@ class NodeServer(object):
             self.start()
 
     def start(self):
-        if self.debug:
-            print('NodeServer starting...')
-
         if self.shutdown_on_exit:
             atexit.register(self.stop)
 
-        arguments = (
+        cmd = (
             PATH_TO_NODE,
             self.path_to_source,
             '--address', self.desired_address,
@@ -90,16 +84,19 @@ class NodeServer(object):
             '--expected-startup-output', self._expected_startup_output,
             '--test-endpoint', self._test_endpoint,
             '--expected-test-output', self._expected_test_output,
-            '--add-endpoint', self._add_endpoint,
-            '--expected-add-output', self._expected_add_output,
+            '--add-service-endpoint', self._add_service_endpoint,
+            '--expected-add-service-output', self._expected_add_service_output,
         )
+
+        self.log('Starting process with {cmd}'.format(cmd=cmd))
 
         # While rendering templates Django will silently ignore some types of exceptions,
         # so we need to intercept them and raise our own class of exception
         try:
-            self._process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # TODO: set NODE_ENV. See `env` arg https://docs.python.org/2/library/subprocess.html#popen-constructor
+            self._process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except (TypeError, AttributeError):
-            msg = 'Failed to start server with {arguments}'.format(arguments=arguments)
+            msg = 'Failed to start server with {arguments}'.format(arguments=cmd)
             six.reraise(NodeServerStartError, NodeServerStartError(msg), sys.exc_info()[2])
 
         # Check the first line of the server's output to ensure that it has started successfully
@@ -128,84 +125,48 @@ class NodeServer(object):
         if not self.test():
             self.stop()
             raise NodeServerStartError(
-                'Cannot test server to determine if startup successful. Tried {test_url}'.format(
+                'Cannot test server to determine if startup successful. Tried "{test_url}"'.format(
                     test_url=self.get_test_url()
                 )
             )
 
-        if self.debug:
-            print('NodeServer now listening at {server_url}'.format(
-                server_url=self.get_server_url()
-            ))
+        self.log('Started process')
+
+    def ensure_started(self):
+        if not self.has_started:
+            self.start()
 
     def stop(self):
-        if self.debug:
-            print('Stopping NodeServer...'.format(
-                server_url=self.get_server_url()
-            ))
-
         if self._process is not None and not self.has_stopped:
             self._process.terminate()
+            self.log('Terminated process')
 
         self.has_stopped = True
         self.has_started = False
-
-    def get(self, url, params=None):
-        if not self.has_started:
-            self.start()
-
-        absolute_url = self.absolute_url(url)
-
-        if self.debug:
-            print('Sending GET request to {absolute_url} with params "{params}"'.format(
-                absolute_url=absolute_url,
-                params=params,
-            ))
-
-        try:
-            response = requests.get(absolute_url, params=params)
-        except ConnectionError:
-            raise NodeServerConnectionError(absolute_url)
-
-        return self._check_response(url, response)
-
-    def post(self, url, data=None):
-        if not self.has_started:
-            self.start()
-
-        absolute_url = self.absolute_url(url)
-
-        if self.debug:
-            print('Sending POST request to {absolute_url} with data "{data}"'.format(
-                absolute_url=absolute_url,
-                data=json.dumps(data),
-            ))
-
-        try:
-            response = requests.post(absolute_url, data=data)
-        except ConnectionError:
-            raise NodeServerConnectionError(absolute_url)
-
-        return self._check_response(url, response)
+        self.address = None
+        self.port = None
 
     def get_server_url(self):
-        return '{protocol}://{address}:{port}'.format(
-            protocol=self.protocol,
-            address=self.address,
-            port=self.port,
-        )
+        if self.protocol and self.address and self.port:
+            return '{protocol}://{address}:{port}'.format(
+                protocol=self.protocol,
+                address=self.address,
+                port=self.port,
+            )
 
     def absolute_url(self, url):
+        separator = '/' if not url.startswith('/') else ''
         return '{server_url}{separator}{url}'.format(
             server_url=self.get_server_url(),
-            separator='/' if not url.startswith('/') else '',
+            separator=separator,
             url=url,
         )
 
     def get_test_url(self):
         return self.absolute_url(self._test_endpoint)
 
-    def _clean_html_output(self, html):
+    def _clean_error_message(self, html):
+        # TODO: replace this with an actual decoder, see: http://stackoverflow.com/a/2087433
         # Convert the error message from HTML to plain text
         html = html.replace('<br>', '\n')
         html = html.replace('&nbsp;', ' ')
@@ -214,9 +175,9 @@ class NodeServer(object):
         html = ' '.join(html.split())
         return html
 
-    def _check_response(self, url, response):
+    def _check_response(self, response, url):
         if response.status_code != 200:
-            error_message = self._clean_html_output(response.text)
+            error_message = self._clean_error_message(response.text)
             raise NodeServerError(
                 'Error at {url}: {error_message}'.format(
                     url=url,
@@ -226,13 +187,21 @@ class NodeServer(object):
 
         return response
 
-    def test(self):
+    def log(self, message):
         if self.debug:
-            print('Testing server at {server_url}'.format(
-                server_url=self.get_server_url()
+            print('{server} [Address: {server_url}] {message}'.format(
+                server=self.__class__.__name__,
+                server_url=self.get_server_url(),
+                message=message,
             ))
 
+    def test(self):
+        if self.address is None or self.port is None:
+            return False
+
         test_url = self.get_test_url()
+
+        self.log('Testing server at {test_url}'.format(test_url=test_url))
 
         try:
             response = requests.get(test_url)
@@ -244,27 +213,48 @@ class NodeServer(object):
 
         return response.text == self._expected_test_output
 
-    def add_endpoint(self, endpoint, path_to_source):
-        if self.debug:
-            print('Adding endpoint {endpoint} to {server_url} with source "{path_to_source}"'.format(
-                endpoint=endpoint,
-                server_url=self.get_server_url(),
-                path_to_source=path_to_source,
-            ))
+    def add_service(self, endpoint, path_to_source):
+        self.ensure_started()
 
-        response = self.post(
-            self._add_endpoint,
-            data={
+        self.log('Adding service at "{endpoint}" with source "{path_to_source}"'.format(
+            endpoint=endpoint,
+            path_to_source=path_to_source,
+        ))
+
+        add_service_url = self.absolute_url(self._add_service_endpoint)
+
+        try:
+            response = requests.post(add_service_url, data={
                 'endpoint': endpoint,
                 'path_to_source': path_to_source,
-            }
-        )
+            })
+        except ConnectionError as e:
+            six.reraise(NodeServerConnectionError, NodeServerConnectionError(*e.args), sys.exc_info()[2])
 
-        if response.text != self._expected_add_output:
-            error_message = self._clean_html_output(response.text)
-            raise ErrorAddingEndpoint(error_message)
+        response = self._check_response(response, add_service_url)
 
-        return ServerEndpoint(
+        if response.text != self._expected_add_service_output:
+            error_message = self._clean_error_message(response.text)
+            raise ErrorAddingService(error_message)
+
+        return Service(
             server=self,
-            endpoint=endpoint
+            endpoint=endpoint,
         )
+
+    def get(self, endpoint, params=None):
+        self.ensure_started()
+
+        self.log('Sending request to endpoint "{url}" with params "{params}"'.format(
+            url=endpoint,
+            params=params,
+        ))
+
+        absolute_url = self.absolute_url(endpoint)
+
+        try:
+            response = requests.get(absolute_url, params=params)
+        except ConnectionError as e:
+            six.reraise(NodeServerConnectionError, NodeServerConnectionError(*e.args), sys.exc_info()[2])
+
+        return self._check_response(response, endpoint)

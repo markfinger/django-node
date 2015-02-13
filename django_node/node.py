@@ -56,6 +56,9 @@ def run(*args, **kwargs):
     """
     ensure_installed()
 
+    # TODO: remove the `production` kwarg and replace it with a `NODE_ENV_PRODUCTION` setting
+    # TODO: NODE_ENV should be set in the Popen call in run_command
+
     production = kwargs.pop('production', None)
     if production:
         node_env = os.environ.get('NODE_ENV', None)
