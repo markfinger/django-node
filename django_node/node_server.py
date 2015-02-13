@@ -8,7 +8,9 @@ import uuid
 from requests.exceptions import ConnectionError
 from django.utils import six
 from . import node, npm
-from .settings import PATH_TO_NODE, SERVER_DEBUG, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED
+from .settings import (
+    PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_PRINT_LOG, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
+)
 from .exceptions import NodeServerConnectionError, NodeServerStartError, NodeServerError, ErrorAddingService
 
 
@@ -18,29 +20,33 @@ class NodeServer(object):
     and responds over HTTP
     """
 
-    debug = SERVER_DEBUG
+    debug = SERVER_PRINT_LOG
     path_to_source = os.path.join(os.path.dirname(__file__), 'server.js')
     start_on_init = False
     resolve_dependencies_on_init = True
     shutdown_on_exit = True
     protocol = 'http'
-    desired_address = '127.0.0.1'
-    desired_port = '0'
+    desired_address = SERVER_ADDRESS
+    desired_port = SERVER_PORT
     address = None
     port = None
+    # TODO: remove this
+    process_is_controlled_externally = False
     has_started = False
     has_stopped = False
 
     _test_endpoint = '/__test__'
     _add_service_endpoint = '/__add_service__'
+    _get_endpoints_endpoint = '/__get_endpoints__'
 
-    _expected_startup_output = 'Started NodeServer'
-    _expected_test_output = 'NodeServer running {token}'.format(
-        token=uuid.uuid4(),
+    # TODO: pass this to the server
+    _blacklisted_endpoints = blacklisted_endpoints = (
+        '', '*', '/', _test_endpoint, _add_service_endpoint, _get_endpoints_endpoint,
     )
-    _expected_add_service_output = 'Added endpoint {token}'.format(
-        token=uuid.uuid4(),
-    )
+
+    _expected_startup_output = 'started_server'
+    _expected_test_output = 'server_test'
+    _expected_add_service_output = 'added_endpoint'
 
     _process = None
     _startup_output = None
@@ -59,11 +65,8 @@ class NodeServer(object):
         if self.start_on_init:
             self.start()
 
-    def start(self):
-        if self.shutdown_on_exit:
-            atexit.register(self.stop)
-
-        cmd = (
+    def get_start_command(self):
+        return (
             PATH_TO_NODE,
             self.path_to_source,
             '--address', self.desired_address,
@@ -73,7 +76,55 @@ class NodeServer(object):
             '--expected-test-output', self._expected_test_output,
             '--add-service-endpoint', self._add_service_endpoint,
             '--expected-add-service-output', self._expected_add_service_output,
+            '--get-endpoints-endpoint', self._get_endpoints_endpoint
         )
+
+    def start_debug(self):
+        cmd = self.get_start_command()
+        cmd = (cmd[0],) + ('debug',) + cmd[1:]
+        subprocess.call(' '.join(cmd), shell=True)
+
+        self.has_started = True
+        self.has_stopped = False
+
+    def has_already_started(self):
+        if self.has_started:
+            return True
+
+        initial_address = self.address
+        initial_port = self.port
+        self.address = self.desired_address
+        self.port = self.desired_port
+        if self.test():
+            return True
+
+        self.address = initial_address
+        self.port = initial_port
+        return False
+
+    def start(self, debug=None, use_existing_process=None, run_as_subprocess=None):
+        if debug is True:
+            self.start_debug()
+            return
+
+        # TODO: throw if process is already running
+        if use_existing_process is None:
+            use_existing_process = True
+
+        # TODO: if run_as_subprocess Popen, else call
+        if run_as_subprocess is None:
+            run_as_subprocess = True
+
+        if use_existing_process and self.has_already_started():
+            self.has_started = True
+            self.has_stopped = False
+            return
+
+        # Make sure that the process is terminated if the python process stops
+        if self.shutdown_on_exit:
+            atexit.register(self.stop)
+
+        cmd = self.get_start_command()
 
         self.log('Starting process with {cmd}'.format(cmd=cmd))
 
@@ -91,6 +142,7 @@ class NodeServer(object):
         if self._startup_output.strip() != self._expected_startup_output:
             self._startup_output += self._process.stdout.read().decode()
             self.stop()
+            # TODO: if EADDRINUSE in error message, throw port-related error
             raise NodeServerStartError(
                 'Error starting server: {startup_output}'.format(
                     startup_output=self._startup_output
@@ -205,6 +257,8 @@ class NodeServer(object):
         return response.text == self._expected_test_output
 
     def get_service(self, endpoint):
+        # TODO: check if registered
+
         def service(**kwargs):
             return self.get(endpoint, params=kwargs)
         service.__name__ = '{server_name} service {endpoint}'.format(
@@ -213,8 +267,20 @@ class NodeServer(object):
         )
         return service
 
+    def get_endpoints(self):
+        self.ensure_started()
+
+        response = self.get(self._get_endpoints_endpoint)
+
+        endpoints = json.loads(response.text)
+
+        return [endpoint for endpoint in endpoints if endpoint not in self._blacklisted_endpoints]
+
     def add_service(self, endpoint, path_to_source):
         self.ensure_started()
+
+        if endpoint not in self._blacklisted_endpoints and endpoint in self.get_endpoints():
+            return self.get_service(endpoint)
 
         self.log('Adding service at "{endpoint}" with source "{path_to_source}"'.format(
             endpoint=endpoint,

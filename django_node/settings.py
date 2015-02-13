@@ -57,7 +57,18 @@ SERVER = setting_overrides.get(
     'django_node.node_server.NodeServer',
 )
 
-SERVER_DEBUG = setting_overrides.get(
-    'SERVER_DEBUG',
+SERVER_ADDRESS = setting_overrides.get(
+    'SERVER_ADDRESS',
+    '127.0.0.1',
+)
+
+SERVER_PORT = setting_overrides.get(
+    'SERVER_PORT',
+    '63578',
+    # '0',
+)
+
+SERVER_PRINT_LOG = setting_overrides.get(
+    'SERVER_PRINT_LOG',
     False,
 )

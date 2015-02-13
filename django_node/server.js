@@ -21,8 +21,9 @@ var port = getArg('port', '--port 0');
 var expectedStartupOutput = getArg('expectedStartupOutput', '--expected-startup-output "server has started"');
 var testEndpoint = getArg('testEndpoint', '--test-endpoint "/__test__"');
 var expectedTestOutput = getArg('expectedTestOutput', '--expected-test-output "server has started"');
-var addServiceEndpoint = getArg('addServiceEndpoint', '--add-service-endpoint "/__add-service__"');
+var addServiceEndpoint = getArg('addServiceEndpoint', '--add-service-endpoint "/__add_service__"');
 var expectedAddServiceOutput = getArg('expectedAddServiceOutput', '--expected-add-service-output "Added service"');
+var getEndpointsEndpoint = getArg('getEndpointsEndpoint', '--get-endpoints-endpoint "/__get_endpoints__"');
 
 var app = express();
 
@@ -61,7 +62,8 @@ app.post(addServiceEndpoint, function(req, res) {
 	if (!endpoint) {
 		throw new Error('No endpoint provided');
 	}
-	if (['/', testEndpoint, addServiceEndpoint].indexOf(endpoint) !== -1) {
+	// TODO: blacklisted endpoints should be read in from the host
+	if (['/', testEndpoint, addServiceEndpoint, getEndpointsEndpoint].indexOf(endpoint) !== -1) {
 		throw new Error('Endpoint "' + endpoint + '" cannot be added');
 	}
 	if (endpoint[0] !== '/') {
@@ -81,6 +83,10 @@ app.post(addServiceEndpoint, function(req, res) {
 	app.get(endpoint, handler);
 
 	res.send(expectedAddServiceOutput);
+});
+
+app.get(getEndpointsEndpoint, function(req, res) {
+	res.send(JSON.stringify(getEndpoints()));
 });
 
 module.exports = app;

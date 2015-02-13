@@ -166,12 +166,12 @@ class TestDjangoNode(unittest.TestCase):
         self.assertRaises(NodeServerError, server.add_service, malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
         server.add_service('/' + malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
 
-    def test_node_server_cannot_add_an_endpoint_twice(self):
+    def test_node_server_can_check_the_endpoints_added(self):
         endpoint = '/test-endpoint'
+        self.assertNotIn(endpoint, server.get_endpoints())
         server.add_service(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
-        self.assertRaises(NodeServerError, server.add_service, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertIn(endpoint, server.get_endpoints())
 
     def test_node_server_cannot_add_certain_endpoints(self):
-        blacklisted_endpoints = ('', '*', '/', server._test_endpoint, server._add_service_endpoint)
-        for endpoint in blacklisted_endpoints:
+        for endpoint in server._blacklisted_endpoints:
             self.assertRaises(NodeServerError, server.add_service, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
