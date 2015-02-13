@@ -4,7 +4,7 @@ import unittest
 import json
 from django.utils import six
 from django_node import node, npm
-from django_node.node_server import NodeServer, Service
+from django_node.node_server import NodeServer
 from django_node.server import server
 from django_node.exceptions import OutdatedDependency, MalformedVersionInput, NodeServerError
 
@@ -15,7 +15,7 @@ PATH_TO_INSTALLED_PACKAGE = os.path.join(PATH_TO_NODE_MODULES, DEPENDENCY_PACKAG
 PACKAGE_TO_INSTALL = 'jquery'
 PATH_TO_PACKAGE_TO_INSTALL = os.path.join(PATH_TO_NODE_MODULES, PACKAGE_TO_INSTALL)
 PATH_TO_PACKAGE_JSON = os.path.join(TEST_DIR, 'package.json')
-TEST_ENDPOINT_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'test-endpoint.js')
+TEST_ENDPOINT_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'test_endpoint.js')
 
 
 class TestDjangoNode(unittest.TestCase):
@@ -154,13 +154,11 @@ class TestDjangoNode(unittest.TestCase):
         })
         self.assertEqual(response.text, expected_output)
 
-    def test_node_server_returns_a_service_instance(self):
-        service = server.add_service('/__added-test-endpoint__', TEST_ENDPOINT_PATH_TO_SOURCE)
-        self.assertIsInstance(service, Service)
+    def test_node_server_returns_a_service_when_adding_one(self):
+        service = server.add_service('/test-endpoint', TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertIn('/test-endpoint', str(service))
         expected_output = 'NodeServer test-endpoint'
-        response = service.get(params={
-            'output': expected_output
-        })
+        response = service(output=expected_output)
         self.assertEqual(response.text, expected_output)
 
     def test_node_server_cannot_add_an_endpoint_without_an_opening_slash(self):

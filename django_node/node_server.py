@@ -12,25 +12,12 @@ from .settings import PATH_TO_NODE, SERVER_DEBUG, NODE_VERSION_REQUIRED, NPM_VER
 from .exceptions import NodeServerConnectionError, NodeServerStartError, NodeServerError, ErrorAddingService
 
 
-class Service(object):
-    server = None
-    endpoint = None
-
-    def __init__(self, server, endpoint):
-        self.server = server
-        self.endpoint = endpoint
-
-    def get(self, params=None):
-        return self.server.get(self.endpoint, params=params)
-
-
 class NodeServer(object):
     """
     A persistent Node server which sits alongside the python process
     and responds over HTTP
     """
 
-    # TODO: replace the debug prints with django logger calls
     debug = SERVER_DEBUG
     path_to_source = os.path.join(os.path.dirname(__file__), 'server.js')
     start_on_init = False
@@ -187,10 +174,14 @@ class NodeServer(object):
 
         return response
 
+    def get_server_name(self):
+        return self.__class__.__name__
+
     def log(self, message):
+        # TODO: replace print with django's logger
         if self.debug:
-            print('{server} [Address: {server_url}] {message}'.format(
-                server=self.__class__.__name__,
+            print('{server_name} [Address: {server_url}] {message}'.format(
+                server_name=self.get_server_name(),
                 server_url=self.get_server_url(),
                 message=message,
             ))
@@ -212,6 +203,15 @@ class NodeServer(object):
             return False
 
         return response.text == self._expected_test_output
+
+    def get_service(self, endpoint):
+        def service(**kwargs):
+            return self.get(endpoint, params=kwargs)
+        service.__name__ = '{server_name} service {endpoint}'.format(
+            server_name=self.get_server_name(),
+            endpoint=endpoint,
+        )
+        return service
 
     def add_service(self, endpoint, path_to_source):
         self.ensure_started()
@@ -237,10 +237,7 @@ class NodeServer(object):
             error_message = self._clean_error_message(response.text)
             raise ErrorAddingService(error_message)
 
-        return Service(
-            server=self,
-            endpoint=endpoint,
-        )
+        return self.get_service(endpoint=endpoint)
 
     def get(self, endpoint, params=None):
         self.ensure_started()
