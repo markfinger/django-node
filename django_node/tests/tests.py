@@ -6,7 +6,7 @@ from django.utils import six
 from django_node import node, npm
 from django_node.node_server import NodeServer
 from django_node.server import server
-from django_node.exceptions import OutdatedDependency, MalformedVersionInput, NodeServerError
+from django_node.exceptions import OutdatedDependency, MalformedVersionInput, NodeServerError, NodeServerAddressInUseError
 
 TEST_DIR = os.path.abspath(os.path.dirname(__file__))
 PATH_TO_NODE_MODULES = os.path.join(TEST_DIR, 'node_modules')
@@ -175,3 +175,35 @@ class TestDjangoNode(unittest.TestCase):
     def test_node_server_cannot_add_certain_endpoints(self):
         for endpoint in server._blacklisted_endpoints:
             self.assertRaises(NodeServerError, server.add_service, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+
+    def test_node_server_process_can_use_rely_on_externally_controlled_processes(self):
+        self.assertFalse(server.test())
+        new_server = NodeServer()
+        new_server.start()
+        self.assertTrue(server.test())
+        new_server.stop()
+        self.assertFalse(server.test())
+
+    def test_node_server_process_can_raise_on_port_collisions(self):
+        self.assertFalse(server.test())
+        new_server = NodeServer()
+        new_server.start()
+        self.assertTrue(server.test())
+        self.assertEqual(server.address, new_server.address)
+        self.assertEqual(server.port, new_server.port)
+        self.assertRaises(NodeServerAddressInUseError, server.start, use_existing_process=False)
+        new_server.stop()
+        self.assertFalse(server.test())
+        server.start(use_existing_process=False)
+        self.assertTrue(server.test())
+
+    def test_node_server_processes_can_share_endpoints(self):
+        new_server = NodeServer()
+        new_server.start()
+        service_on_new_server = new_server.add_service('/test-endpoint', TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertEqual(service_on_new_server(output='test').text, 'test')
+        self.assertIn('/test-endpoint', server.get_endpoints())
+        service_on_server = server.get_service('test-endpoint')
+        self.assertEqual(service_on_server(output='test').text, 'test')
+        new_server.stop()
+        self.assertFalse(server.test())

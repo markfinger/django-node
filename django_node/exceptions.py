@@ -30,6 +30,10 @@ class NodeServerStartError(Exception):
     pass
 
 
+class NodeServerAddressInUseError(Exception):
+    pass
+
+
 class NodeServerConnectionError(Exception):
     pass
 

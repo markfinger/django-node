@@ -4,14 +4,15 @@ import atexit
 import json
 import subprocess
 import requests
-import uuid
 from requests.exceptions import ConnectionError
 from django.utils import six
 from . import node, npm
 from .settings import (
     PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_PRINT_LOG, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
 )
-from .exceptions import NodeServerConnectionError, NodeServerStartError, NodeServerError, ErrorAddingService
+from .exceptions import (
+    NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerError, ErrorAddingService,
+)
 
 
 class NodeServer(object):
@@ -20,18 +21,13 @@ class NodeServer(object):
     and responds over HTTP
     """
 
-    debug = SERVER_PRINT_LOG
+    protocol = 'http'
+    address = SERVER_ADDRESS
+    port = SERVER_PORT
     path_to_source = os.path.join(os.path.dirname(__file__), 'server.js')
     start_on_init = False
     resolve_dependencies_on_init = True
     shutdown_on_exit = True
-    protocol = 'http'
-    desired_address = SERVER_ADDRESS
-    desired_port = SERVER_PORT
-    address = None
-    port = None
-    # TODO: remove this
-    process_is_controlled_externally = False
     has_started = False
     has_stopped = False
 
@@ -39,94 +35,83 @@ class NodeServer(object):
     _add_service_endpoint = '/__add_service__'
     _get_endpoints_endpoint = '/__get_endpoints__'
 
-    # TODO: pass this to the server
-    _blacklisted_endpoints = blacklisted_endpoints = (
+    _blacklisted_endpoints = (
         '', '*', '/', _test_endpoint, _add_service_endpoint, _get_endpoints_endpoint,
     )
 
-    _expected_startup_output = 'started_server'
-    _expected_test_output = 'server_test'
-    _expected_add_service_output = 'added_endpoint'
+    _expected_startup_output = '__NODE_SERVER_IS_RUNNING__\n'
+    _expected_test_output = '__SERVER_TEST__'
+    _expected_add_service_output = '__ADDED_ENDPOINT__'
 
     _process = None
-    _startup_output = None
-    _server_details_json = None
-    _server_details = None
 
     def __init__(self):
         if self.resolve_dependencies_on_init:
             # Ensure that the external dependencies are met
             node.ensure_version_gte(NODE_VERSION_REQUIRED)
             npm.ensure_version_gte(NPM_VERSION_REQUIRED)
-
             # Ensure that the required packages have been installed
             npm.install(os.path.dirname(__file__))
 
         if self.start_on_init:
             self.start()
 
-    def get_start_command(self):
-        return (
-            PATH_TO_NODE,
-            self.path_to_source,
-            '--address', self.desired_address,
-            '--port', self.desired_port,
-            '--expected-startup-output', self._expected_startup_output,
-            '--test-endpoint', self._test_endpoint,
-            '--expected-test-output', self._expected_test_output,
-            '--add-service-endpoint', self._add_service_endpoint,
-            '--expected-add-service-output', self._expected_add_service_output,
-            '--get-endpoints-endpoint', self._get_endpoints_endpoint
-        )
-
-    def start_debug(self):
-        cmd = self.get_start_command()
-        cmd = (cmd[0],) + ('debug',) + cmd[1:]
-        subprocess.call(' '.join(cmd), shell=True)
-
-        self.has_started = True
-        self.has_stopped = False
-
-    def has_already_started(self):
-        if self.has_started:
-            return True
-
-        initial_address = self.address
-        initial_port = self.port
-        self.address = self.desired_address
-        self.port = self.desired_port
-        if self.test():
-            return True
-
-        self.address = initial_address
-        self.port = initial_port
-        return False
-
-    def start(self, debug=None, use_existing_process=None, run_as_subprocess=None):
-        if debug is True:
-            self.start_debug()
-            return
-
-        # TODO: throw if process is already running
+    def start(self, debug=None, use_existing_process=None, blocking=None):
+        if debug is None:
+            debug = False
         if use_existing_process is None:
             use_existing_process = True
+        if blocking is None:
+            blocking = False
 
-        # TODO: if run_as_subprocess Popen, else call
-        if run_as_subprocess is None:
-            run_as_subprocess = True
+        if debug:
+            use_existing_process = False
+            blocking = True
 
-        if use_existing_process and self.has_already_started():
+        if use_existing_process and self.test():
             self.has_started = True
             self.has_stopped = False
             return
 
-        # Make sure that the process is terminated if the python process stops
+        if not use_existing_process and self.test():
+            raise NodeServerAddressInUseError(
+                'A process is already listening at {server_url}'.format(
+                    server_url=self.get_server_url()
+                )
+            )
+
+        # Ensure that the process is terminated if the python process stops
         if self.shutdown_on_exit:
             atexit.register(self.stop)
 
-        cmd = self.get_start_command()
+        cmd = (PATH_TO_NODE,)
+        if debug:
+            cmd += ('debug',)
+        cmd += (
+            self.path_to_source,
+            '--address', self.address,
+            '--port', self.port,
+            '--test-endpoint', self._test_endpoint,
+            '--expected-test-output', self._expected_test_output,
+            '--add-service-endpoint', self._add_service_endpoint,
+            '--expected-add-service-output', self._expected_add_service_output,
+            '--get-endpoints-endpoint', self._get_endpoints_endpoint,
+            '--blacklisted-endpoints', json.dumps(self._blacklisted_endpoints),
+        )
+        if blocking:
+            cmd += (
+                '--expected-startup-output',
+                'Node server listening at {server_url}'.format(server_url=self.get_server_url()),
+            )
+        else:
+            cmd += ('--expected-startup-output', self._expected_startup_output,)
 
         self.log('Starting process with {cmd}'.format(cmd=cmd))
+
+        if blocking:
+            # Start the server in a blocking process
+            subprocess.call(cmd)
+            return
 
         # While rendering templates Django will silently ignore some types of exceptions,
         # so we need to intercept them and raise our own class of exception
@@ -137,34 +122,34 @@ class NodeServer(object):
             msg = 'Failed to start server with {arguments}'.format(arguments=cmd)
             six.reraise(NodeServerStartError, NodeServerStartError(msg), sys.exc_info()[2])
 
-        # Check the first line of the server's output to ensure that it has started successfully
-        self._startup_output = self._process.stdout.readline().decode()
-        if self._startup_output.strip() != self._expected_startup_output:
-            self._startup_output += self._process.stdout.read().decode()
-            self.stop()
-            # TODO: if EADDRINUSE in error message, throw port-related error
-            raise NodeServerStartError(
-                'Error starting server: {startup_output}'.format(
-                    startup_output=self._startup_output
+        # Block until the server is ready and pushes the expected output to stdout
+        output = self._process.stdout.readline()
+
+        if output != self._expected_startup_output:
+            # Read in the rest of the error message
+            output += self._process.stdout.read()
+            if 'EADDRINUSE' in output:
+                raise NodeServerAddressInUseError(
+                    (
+                        'Port "{port}" already in use. '
+                        'Try changing the DJANGO_NODE[\'SERVER_PORT\'] setting. '
+                        '{output}'
+                    ).format(
+                        port=self.port,
+                        output=output,
+                    )
                 )
-            )
-
-        server_details_json = self._process.stdout.readline()
-        self._server_details_json = server_details_json.decode()
-        self._server_details = json.loads(self._server_details_json)
-
-        # If the server is defining its own address or port, we need to record it
-        self.address = self._server_details['address']
-        self.port = self._server_details['port']
+            else:
+                raise NodeServerStartError(output)
 
         self.has_started = True
         self.has_stopped = False
 
-        # Ensure that we can connect to the server over the network
+        # Ensure that the server is running
         if not self.test():
             self.stop()
             raise NodeServerStartError(
-                'Cannot test server to determine if startup successful. Tried "{test_url}"'.format(
+                'Server does not appear to be running. Tried to test the server at "{test_url}"'.format(
                     test_url=self.get_test_url()
                 )
             )
@@ -182,8 +167,6 @@ class NodeServer(object):
 
         self.has_stopped = True
         self.has_started = False
-        self.address = None
-        self.port = None
 
     def get_server_url(self):
         if self.protocol and self.address and self.port:
@@ -204,8 +187,8 @@ class NodeServer(object):
     def get_test_url(self):
         return self.absolute_url(self._test_endpoint)
 
-    def _clean_error_message(self, html):
-        # TODO: replace this with an actual decoder, see: http://stackoverflow.com/a/2087433
+    def _html_to_plain_text(self, html):
+        # TODO: replace this with an actual HTML decoder, see: http://stackoverflow.com/a/2087433
         # Convert the error message from HTML to plain text
         html = html.replace('<br>', '\n')
         html = html.replace('&nbsp;', ' ')
@@ -214,9 +197,9 @@ class NodeServer(object):
         html = ' '.join(html.split())
         return html
 
-    def _check_response(self, response, url):
+    def _validate_response(self, response, url):
         if response.status_code != 200:
-            error_message = self._clean_error_message(response.text)
+            error_message = self._html_to_plain_text(response.text)
             raise NodeServerError(
                 'Error at {url}: {error_message}'.format(
                     url=url,
@@ -231,7 +214,7 @@ class NodeServer(object):
 
     def log(self, message):
         # TODO: replace print with django's logger
-        if self.debug:
+        if SERVER_PRINT_LOG:
             print('{server_name} [Address: {server_url}] {message}'.format(
                 server_name=self.get_server_name(),
                 server_url=self.get_server_url(),
@@ -257,8 +240,6 @@ class NodeServer(object):
         return response.text == self._expected_test_output
 
     def get_service(self, endpoint):
-        # TODO: check if registered
-
         def service(**kwargs):
             return self.get(endpoint, params=kwargs)
         service.__name__ = '{server_name} service {endpoint}'.format(
@@ -274,7 +255,7 @@ class NodeServer(object):
 
         endpoints = json.loads(response.text)
 
-        return [endpoint for endpoint in endpoints if endpoint not in self._blacklisted_endpoints]
+        return [endpoint for endpoint in endpoints]
 
     def add_service(self, endpoint, path_to_source):
         self.ensure_started()
@@ -297,10 +278,10 @@ class NodeServer(object):
         except ConnectionError as e:
             six.reraise(NodeServerConnectionError, NodeServerConnectionError(*e.args), sys.exc_info()[2])
 
-        response = self._check_response(response, add_service_url)
+        response = self._validate_response(response, add_service_url)
 
         if response.text != self._expected_add_service_output:
-            error_message = self._clean_error_message(response.text)
+            error_message = self._html_to_plain_text(response.text)
             raise ErrorAddingService(error_message)
 
         return self.get_service(endpoint=endpoint)
@@ -320,4 +301,4 @@ class NodeServer(object):
         except ConnectionError as e:
             six.reraise(NodeServerConnectionError, NodeServerConnectionError(*e.args), sys.exc_info()[2])
 
-        return self._check_response(response, endpoint)
+        return self._validate_response(response, endpoint)

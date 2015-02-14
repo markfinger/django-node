@@ -24,16 +24,16 @@ var expectedTestOutput = getArg('expectedTestOutput', '--expected-test-output "s
 var addServiceEndpoint = getArg('addServiceEndpoint', '--add-service-endpoint "/__add_service__"');
 var expectedAddServiceOutput = getArg('expectedAddServiceOutput', '--expected-add-service-output "Added service"');
 var getEndpointsEndpoint = getArg('getEndpointsEndpoint', '--get-endpoints-endpoint "/__get_endpoints__"');
+var blacklistedEndpoints = getArg('blacklistedEndpoints', '--blacklisted-endpoints "["", "/"]');
+blacklistedEndpoints = JSON.parse(blacklistedEndpoints);
 
 var app = express();
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
-var server = app.listen(port, address, function() {
+app.listen(port, address, function() {
 	console.log(expectedStartupOutput);
-	var output = JSON.stringify(server.address());
-	console.log(output);
 });
 
 var getEndpoints = function() {
@@ -62,8 +62,7 @@ app.post(addServiceEndpoint, function(req, res) {
 	if (!endpoint) {
 		throw new Error('No endpoint provided');
 	}
-	// TODO: blacklisted endpoints should be read in from the host
-	if (['/', testEndpoint, addServiceEndpoint, getEndpointsEndpoint].indexOf(endpoint) !== -1) {
+	if (blacklistedEndpoints.indexOf(endpoint) !== -1) {
 		throw new Error('Endpoint "' + endpoint + '" cannot be added');
 	}
 	if (endpoint[0] !== '/') {

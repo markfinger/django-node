@@ -65,7 +65,6 @@ SERVER_ADDRESS = setting_overrides.get(
 SERVER_PORT = setting_overrides.get(
     'SERVER_PORT',
     '63578',
-    # '0',
 )
 
 SERVER_PRINT_LOG = setting_overrides.get(
