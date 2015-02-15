@@ -130,10 +130,11 @@ class NodeServer(object):
 
         # Block until the server is ready and pushes the expected output to stdout
         output = self._process.stdout.readline()
+        output = output.decode('utf-8')
 
         if output != self._expected_startup_output:
             # Read in the rest of the error message
-            output += self._process.stdout.read()
+            output += self._process.stdout.read().decode('utf-8')
             if 'EADDRINUSE' in output:
                 raise NodeServerAddressInUseError(
                     (
@@ -192,6 +193,7 @@ class NodeServer(object):
 
     def _html_to_plain_text(self, html):
         html = html_unescape(html)
+        html = html.decode('utf-8')
         # Replace HTML break rules with new lines
         html = html.replace('<br>', '\n')
         # Remove multiple spaces
@@ -264,10 +266,8 @@ class NodeServer(object):
         def service(**kwargs):
             return self.get_service(endpoint, params=kwargs)
 
-        service.__name__ = '{server_name} service {endpoint}'.format(
-            server_name=self.get_server_name(),
-            endpoint=endpoint,
-        )
+        service.endpoint = endpoint
+        service.server_name = self.get_server_name()
 
         return service
 

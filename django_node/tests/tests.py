@@ -159,7 +159,8 @@ class TestDjangoNode(unittest.TestCase):
 
     def test_node_server_returns_a_service_when_adding_one(self):
         service = server.add_service('/test-endpoint', TEST_SERVICE_PATH_TO_SOURCE)
-        self.assertIn('/test-endpoint', str(service))
+        self.assertEqual(service.endpoint, '/test-endpoint')
+        self.assertEqual(service.server_name, server.get_server_name())
         expected_output = 'NodeServer test-endpoint'
         response = service(output=expected_output)
         self.assertEqual(response.text, expected_output)
