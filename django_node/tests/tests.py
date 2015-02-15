@@ -17,8 +17,8 @@ PATH_TO_INSTALLED_PACKAGE = os.path.join(PATH_TO_NODE_MODULES, DEPENDENCY_PACKAG
 PACKAGE_TO_INSTALL = 'jquery'
 PATH_TO_PACKAGE_TO_INSTALL = os.path.join(PATH_TO_NODE_MODULES, PACKAGE_TO_INSTALL)
 PATH_TO_PACKAGE_JSON = os.path.join(TEST_DIR, 'package.json')
-TEST_ENDPOINT_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'test_endpoint.js')
-LONG_RUNNING_SERVICE_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'long_running_service.js')
+TEST_SERVICE_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'test_service.js')
+TIMEOUT_SERVICE_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'timeout_service.js')
 
 
 class TestDjangoNode(unittest.TestCase):
@@ -150,7 +150,7 @@ class TestDjangoNode(unittest.TestCase):
 
     def test_node_server_can_add_an_endpoint(self):
         endpoint = '/test-endpoint'
-        server.add_service(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        server.add_service(endpoint, TEST_SERVICE_PATH_TO_SOURCE)
         expected_output = 'NodeServer test-endpoint'
         response = server.get_service(endpoint, params={
             'output': expected_output
@@ -158,7 +158,7 @@ class TestDjangoNode(unittest.TestCase):
         self.assertEqual(response.text, expected_output)
 
     def test_node_server_returns_a_service_when_adding_one(self):
-        service = server.add_service('/test-endpoint', TEST_ENDPOINT_PATH_TO_SOURCE)
+        service = server.add_service('/test-endpoint', TEST_SERVICE_PATH_TO_SOURCE)
         self.assertIn('/test-endpoint', str(service))
         expected_output = 'NodeServer test-endpoint'
         response = service(output=expected_output)
@@ -166,18 +166,18 @@ class TestDjangoNode(unittest.TestCase):
 
     def test_node_server_cannot_add_an_endpoint_without_an_opening_slash(self):
         malformed_endpoint = 'malformed_endpoint'
-        self.assertRaises(NodeServerError, server.add_service, malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
-        server.add_service('/' + malformed_endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        self.assertRaises(NodeServerError, server.add_service, malformed_endpoint, TEST_SERVICE_PATH_TO_SOURCE)
+        server.add_service('/' + malformed_endpoint, TEST_SERVICE_PATH_TO_SOURCE)
 
     def test_node_server_can_check_the_endpoints_added(self):
         endpoint = '/test-endpoint'
         self.assertNotIn(endpoint, server.get_endpoints())
-        server.add_service(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+        server.add_service(endpoint, TEST_SERVICE_PATH_TO_SOURCE)
         self.assertIn(endpoint, server.get_endpoints())
 
     def test_node_server_cannot_add_certain_endpoints(self):
         for endpoint in server._blacklisted_endpoints:
-            self.assertRaises(NodeServerError, server.add_service, endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
+            self.assertRaises(NodeServerError, server.add_service, endpoint, TEST_SERVICE_PATH_TO_SOURCE)
 
     def test_node_server_process_can_use_rely_on_externally_controlled_processes(self):
         self.assertFalse(server.test())
@@ -203,7 +203,7 @@ class TestDjangoNode(unittest.TestCase):
     def test_node_server_processes_can_share_endpoints(self):
         new_server = NodeServer()
         new_server.start()
-        service_on_new_server = new_server.add_service('/test-endpoint', TEST_ENDPOINT_PATH_TO_SOURCE)
+        service_on_new_server = new_server.add_service('/test-endpoint', TEST_SERVICE_PATH_TO_SOURCE)
         self.assertEqual(service_on_new_server(output='test').text, 'test')
         self.assertIn('/test-endpoint', server.get_endpoints())
         service_on_server = server.service_factory('test-endpoint')
@@ -212,5 +212,5 @@ class TestDjangoNode(unittest.TestCase):
         self.assertFalse(server.test())
 
     def test_node_server_throws_timeout_on_long_running_services(self):
-        service = server.add_service('/long-running-service', LONG_RUNNING_SERVICE_PATH_TO_SOURCE)
+        service = server.add_service('/long-running-service', TIMEOUT_SERVICE_PATH_TO_SOURCE)
         self.assertRaises(NodeServerTimeoutError, service)
