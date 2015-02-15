@@ -3,16 +3,20 @@ import sys
 import atexit
 import json
 import subprocess
+import logging
+import re
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, ReadTimeout, Timeout
 from django.utils import six
 from . import node, npm
 from .settings import (
-    PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_PRINT_LOG, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
+    PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_TIMEOUT, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
 )
 from .exceptions import (
     NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerError, ErrorAddingService,
+    NodeServerTimeoutError,
 )
+from .utils import html_unescape
 
 
 class NodeServer(object):
@@ -30,6 +34,8 @@ class NodeServer(object):
     shutdown_on_exit = True
     has_started = False
     has_stopped = False
+    logger = logging.getLogger(__name__)
+    timeout = SERVER_TIMEOUT
 
     _test_endpoint = '/__test__'
     _add_service_endpoint = '/__add_service__'
@@ -149,8 +155,8 @@ class NodeServer(object):
         if not self.test():
             self.stop()
             raise NodeServerStartError(
-                'Server does not appear to be running. Tried to test the server at "{test_url}"'.format(
-                    test_url=self.get_test_url()
+                'Server does not appear to be running. Tried to test the server at "{test_endpoint}"'.format(
+                    test_endpoint=self._test_endpoint,
                 )
             )
 
@@ -184,17 +190,12 @@ class NodeServer(object):
             url=url,
         )
 
-    def get_test_url(self):
-        return self.absolute_url(self._test_endpoint)
-
     def _html_to_plain_text(self, html):
-        # TODO: replace this with an actual HTML decoder, see: http://stackoverflow.com/a/2087433
-        # Convert the error message from HTML to plain text
+        html = html_unescape(html)
+        # Replace HTML break rules with new lines
         html = html.replace('<br>', '\n')
-        html = html.replace('&nbsp;', ' ')
-        html = html.replace('&quot;', '"')
         # Remove multiple spaces
-        html = ' '.join(html.split())
+        html = re.sub(' +', ' ', html)
         return html
 
     def _validate_response(self, response, url):
@@ -213,25 +214,28 @@ class NodeServer(object):
         return self.__class__.__name__
 
     def log(self, message):
-        # TODO: replace print with django's logger
-        if SERVER_PRINT_LOG:
-            print('{server_name} [Address: {server_url}] {message}'.format(
+        self.logger.info(
+            '{server_name} [Address: {server_url}] {message}'.format(
                 server_name=self.get_server_name(),
                 server_url=self.get_server_url(),
                 message=message,
-            ))
+            )
+        )
 
     def test(self):
         if self.address is None or self.port is None:
             return False
 
-        test_url = self.get_test_url()
+        self.log('Testing server at {test_endpoint}'.format(test_endpoint=self._test_endpoint))
 
-        self.log('Testing server at {test_url}'.format(test_url=test_url))
+        absolute_url = self.absolute_url(self._test_endpoint)
 
         try:
-            response = requests.get(test_url)
-        except ConnectionError:
+            response = self._send_request(
+                requests.get,
+                absolute_url,
+            )
+        except (NodeServerConnectionError, NodeServerTimeoutError):
             return False
 
         if response.status_code != 200:
@@ -239,54 +243,63 @@ class NodeServer(object):
 
         return response.text == self._expected_test_output
 
-    def get_service(self, endpoint):
+    def get_endpoints(self):
+        self.ensure_started()
+
+        response = self.get_service(self._get_endpoints_endpoint)
+
+        endpoints = json.loads(response.text)
+
+        return [endpoint for endpoint in endpoints]
+
+    def service_factory(self, endpoint):
         def service(**kwargs):
-            return self.get(endpoint, params=kwargs)
+            return self.get_service(endpoint, params=kwargs)
         service.__name__ = '{server_name} service {endpoint}'.format(
             server_name=self.get_server_name(),
             endpoint=endpoint,
         )
         return service
 
-    def get_endpoints(self):
-        self.ensure_started()
-
-        response = self.get(self._get_endpoints_endpoint)
-
-        endpoints = json.loads(response.text)
-
-        return [endpoint for endpoint in endpoints]
-
     def add_service(self, endpoint, path_to_source):
         self.ensure_started()
 
         if endpoint not in self._blacklisted_endpoints and endpoint in self.get_endpoints():
-            return self.get_service(endpoint)
+            return self.service_factory(endpoint)
 
         self.log('Adding service at "{endpoint}" with source "{path_to_source}"'.format(
             endpoint=endpoint,
             path_to_source=path_to_source,
         ))
 
-        add_service_url = self.absolute_url(self._add_service_endpoint)
+        absolute_url = self.absolute_url(self._add_service_endpoint)
 
-        try:
-            response = requests.post(add_service_url, data={
+        response = self._send_request(
+            requests.post,
+            absolute_url,
+            data={
                 'endpoint': endpoint,
                 'path_to_source': path_to_source,
-            })
-        except ConnectionError as e:
-            six.reraise(NodeServerConnectionError, NodeServerConnectionError(*e.args), sys.exc_info()[2])
+            },
+        )
 
-        response = self._validate_response(response, add_service_url)
+        response = self._validate_response(response, absolute_url)
 
         if response.text != self._expected_add_service_output:
             error_message = self._html_to_plain_text(response.text)
             raise ErrorAddingService(error_message)
 
-        return self.get_service(endpoint=endpoint)
+        return self.service_factory(endpoint=endpoint)
 
-    def get(self, endpoint, params=None):
+    def _send_request(self, func, url, **kwargs):
+        try:
+            return func(url, timeout=self.timeout, **kwargs)
+        except ConnectionError as e:
+            six.reraise(NodeServerConnectionError, NodeServerConnectionError(url, *e.args), sys.exc_info()[2])
+        except (ReadTimeout, Timeout) as e:
+            six.reraise(NodeServerTimeoutError, NodeServerTimeoutError(url, *e.args), sys.exc_info()[2])
+
+    def get_service(self, endpoint, params=None):
         self.ensure_started()
 
         self.log('Sending request to endpoint "{url}" with params "{params}"'.format(
@@ -296,9 +309,10 @@ class NodeServer(object):
 
         absolute_url = self.absolute_url(endpoint)
 
-        try:
-            response = requests.get(absolute_url, params=params)
-        except ConnectionError as e:
-            six.reraise(NodeServerConnectionError, NodeServerConnectionError(*e.args), sys.exc_info()[2])
+        response = self._send_request(
+            requests.get,
+            absolute_url,
+            params=params,
+        )
 
         return self._validate_response(response, endpoint)

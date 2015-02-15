@@ -6,7 +6,9 @@ from django.utils import six
 from django_node import node, npm
 from django_node.node_server import NodeServer
 from django_node.server import server
-from django_node.exceptions import OutdatedDependency, MalformedVersionInput, NodeServerError, NodeServerAddressInUseError
+from django_node.exceptions import (
+    OutdatedDependency, MalformedVersionInput, NodeServerError, NodeServerAddressInUseError, NodeServerTimeoutError,
+)
 
 TEST_DIR = os.path.abspath(os.path.dirname(__file__))
 PATH_TO_NODE_MODULES = os.path.join(TEST_DIR, 'node_modules')
@@ -16,6 +18,7 @@ PACKAGE_TO_INSTALL = 'jquery'
 PATH_TO_PACKAGE_TO_INSTALL = os.path.join(PATH_TO_NODE_MODULES, PACKAGE_TO_INSTALL)
 PATH_TO_PACKAGE_JSON = os.path.join(TEST_DIR, 'package.json')
 TEST_ENDPOINT_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'test_endpoint.js')
+LONG_RUNNING_SERVICE_PATH_TO_SOURCE = os.path.join(TEST_DIR, 'long_running_service.js')
 
 
 class TestDjangoNode(unittest.TestCase):
@@ -149,7 +152,7 @@ class TestDjangoNode(unittest.TestCase):
         endpoint = '/test-endpoint'
         server.add_service(endpoint, TEST_ENDPOINT_PATH_TO_SOURCE)
         expected_output = 'NodeServer test-endpoint'
-        response = server.get(endpoint, params={
+        response = server.get_service(endpoint, params={
             'output': expected_output
         })
         self.assertEqual(response.text, expected_output)
@@ -203,7 +206,11 @@ class TestDjangoNode(unittest.TestCase):
         service_on_new_server = new_server.add_service('/test-endpoint', TEST_ENDPOINT_PATH_TO_SOURCE)
         self.assertEqual(service_on_new_server(output='test').text, 'test')
         self.assertIn('/test-endpoint', server.get_endpoints())
-        service_on_server = server.get_service('test-endpoint')
+        service_on_server = server.service_factory('test-endpoint')
         self.assertEqual(service_on_server(output='test').text, 'test')
         new_server.stop()
         self.assertFalse(server.test())
+
+    def test_node_server_throws_timeout_on_long_running_services(self):
+        service = server.add_service('/long-running-service', LONG_RUNNING_SERVICE_PATH_TO_SOURCE)
+        self.assertRaises(NodeServerTimeoutError, service)

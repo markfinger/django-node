@@ -67,7 +67,7 @@ SERVER_PORT = setting_overrides.get(
     '63578',
 )
 
-SERVER_PRINT_LOG = setting_overrides.get(
-    'SERVER_PRINT_LOG',
-    False,
+SERVER_TIMEOUT = setting_overrides.get(
+    'SERVER_MAX_TIMEOUT',
+    2.0,
 )

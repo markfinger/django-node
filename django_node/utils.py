@@ -151,3 +151,24 @@ def dynamic_import(import_path):
             import_path=import_path
         ))
     return imported_object
+
+
+_html_unescape = None
+if six.PY2:
+    import HTMLParser
+    h = HTMLParser.HTMLParser()
+    _html_unescape = h.unescape
+elif six.PY3:
+    try:
+        import html.parser
+        h = html.parser.HTMLParser()
+        _html_unescape = h.unescape
+    except ImportError:  # Py3.4+
+        import html
+        _html_unescape = html.unescape
+
+
+def html_unescape(string):
+    if _html_unescape:
+        return _html_unescape(string).encode('utf-8')
+    return string

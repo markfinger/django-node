@@ -38,6 +38,10 @@ class NodeServerConnectionError(Exception):
     pass
 
 
+class NodeServerTimeoutError(Exception):
+    pass
+
+
 class NodeServerError(Exception):
     pass
 
