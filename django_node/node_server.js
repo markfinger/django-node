@@ -32,7 +32,7 @@ var app = express();
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.listen(port, address, function() {
+var server = app.listen(port, address, function() {
 	console.log(expectedStartupOutput);
 });
 
@@ -88,4 +88,7 @@ app.get(getEndpointsEndpoint, function(req, res) {
 	res.send(JSON.stringify(getEndpoints()));
 });
 
-module.exports = app;
+module.exports = {
+	app: app,
+	server: server
+};
