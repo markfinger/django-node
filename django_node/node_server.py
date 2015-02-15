@@ -28,7 +28,7 @@ class NodeServer(object):
     protocol = 'http'
     address = SERVER_ADDRESS
     port = SERVER_PORT
-    path_to_source = os.path.join(os.path.dirname(__file__), 'server.js')
+    path_to_source = os.path.join(os.path.dirname(__file__), 'node_server.js')
     start_on_init = False
     resolve_dependencies_on_init = True
     shutdown_on_exit = True
