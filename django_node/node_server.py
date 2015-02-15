@@ -203,12 +203,14 @@ class NodeServer(object):
     def _validate_response(self, response, url):
         if response.status_code != 200:
             error_message = self._html_to_plain_text(response.text)
-            raise NodeServerError(
-                'Error at {url}: {error_message}'.format(
-                    url=url,
-                    error_message=error_message,
-                )
-            )
+            message = 'Error at {url}: {error_message}'
+            if six.PY2:
+                # Prevent UnicodeEncodeError
+                message = unicode(message)
+            raise NodeServerError(message.format(
+                url=url,
+                error_message=error_message,
+            ))
 
         return response
 
