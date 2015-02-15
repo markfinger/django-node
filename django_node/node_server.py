@@ -210,6 +210,14 @@ class NodeServer(object):
 
         return response
 
+    def _send_request(self, func, url, **kwargs):
+        try:
+            return func(url, timeout=self.timeout, **kwargs)
+        except ConnectionError as e:
+            six.reraise(NodeServerConnectionError, NodeServerConnectionError(url, *e.args), sys.exc_info()[2])
+        except (ReadTimeout, Timeout) as e:
+            six.reraise(NodeServerTimeoutError, NodeServerTimeoutError(url, *e.args), sys.exc_info()[2])
+
     def get_server_name(self):
         return self.__class__.__name__
 
@@ -255,10 +263,12 @@ class NodeServer(object):
     def service_factory(self, endpoint):
         def service(**kwargs):
             return self.get_service(endpoint, params=kwargs)
+
         service.__name__ = '{server_name} service {endpoint}'.format(
             server_name=self.get_server_name(),
             endpoint=endpoint,
         )
+
         return service
 
     def add_service(self, endpoint, path_to_source):
@@ -290,14 +300,6 @@ class NodeServer(object):
             raise ErrorAddingService(error_message)
 
         return self.service_factory(endpoint=endpoint)
-
-    def _send_request(self, func, url, **kwargs):
-        try:
-            return func(url, timeout=self.timeout, **kwargs)
-        except ConnectionError as e:
-            six.reraise(NodeServerConnectionError, NodeServerConnectionError(url, *e.args), sys.exc_info()[2])
-        except (ReadTimeout, Timeout) as e:
-            six.reraise(NodeServerTimeoutError, NodeServerTimeoutError(url, *e.args), sys.exc_info()[2])
 
     def get_service(self, endpoint, params=None):
         self.ensure_started()
