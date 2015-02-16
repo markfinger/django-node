@@ -170,12 +170,12 @@ class NodeServer(object):
             self.start()
 
     def stop(self):
-        self.has_stopped = True
-        self.has_started = False
-
         if self._process is not None and not self.has_stopped:
             self._process.terminate()
             self.log('Terminated process')
+
+        self.has_stopped = True
+        self.has_started = False
 
     def get_server_url(self):
         if self.protocol and self.address and self.port:
