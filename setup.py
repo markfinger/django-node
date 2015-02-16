@@ -14,6 +14,7 @@ setup(
     },
     install_requires=[
         'django',
+        'requests>=2.5.1',
     ],
     description='Bindings and utils for integrating Node.js and NPM into a Django application',
     long_description='Documentation at https://github.com/markfinger/django-node',
