@@ -1,6 +1,8 @@
 Django Node
 ===========
 
+[![Build Status](https://travis-ci.org/markfinger/django-node.svg?branch=master)](https://travis-ci.org/markfinger/django-node)
+
 Bindings and utils for integrating Node.js and NPM into a Django application.
 
 ```python
