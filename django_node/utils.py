@@ -1,3 +1,4 @@
+import sys
 import subprocess
 import tempfile
 import importlib
@@ -146,10 +147,11 @@ def dynamic_import(import_path):
     try:
         imported_module = importlib.import_module(module_import_path)
         imported_object = getattr(imported_module, import_path.split('.')[-1])
-    except (ImportError, AttributeError):
-        raise DynamicImportError('Failed to import "{import_path}"'.format(
+    except (ImportError, AttributeError) as e:
+        msg = 'Failed to import "{import_path}"'.format(
             import_path=import_path
-        ))
+        )
+        six.reraise(DynamicImportError, DynamicImportError(msg, e.__class__.__name__, *e.args), sys.exc_info()[2])
     return imported_object
 
 
