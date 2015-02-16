@@ -10,11 +10,12 @@ from requests.exceptions import ConnectionError, ReadTimeout, Timeout
 from django.utils import six
 from . import node, npm
 from .settings import (
-    PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_TIMEOUT, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
+    PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_TIMEOUT, SERVER_TEST_TIMEOUT, NODE_VERSION_REQUIRED,
+    NPM_VERSION_REQUIRED,
 )
 from .exceptions import (
     NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerError, ErrorAddingService,
-    NodeServerTimeoutError,
+    NodeServerTimeoutError
 )
 from .utils import html_unescape
 
@@ -36,6 +37,7 @@ class NodeServer(object):
     has_stopped = False
     logger = logging.getLogger(__name__)
     timeout = SERVER_TIMEOUT
+    test_timeout = SERVER_TEST_TIMEOUT
 
     _test_endpoint = '/__test__'
     _add_service_endpoint = '/__add_service__'
@@ -168,12 +170,12 @@ class NodeServer(object):
             self.start()
 
     def stop(self):
+        self.has_stopped = True
+        self.has_started = False
+
         if self._process is not None and not self.has_stopped:
             self._process.terminate()
             self.log('Terminated process')
-
-        self.has_stopped = True
-        self.has_started = False
 
     def get_server_url(self):
         if self.protocol and self.address and self.port:
@@ -215,8 +217,9 @@ class NodeServer(object):
         return response
 
     def _send_request(self, func, url, **kwargs):
+        timeout = kwargs.pop('timeout', self.timeout)
         try:
-            return func(url, timeout=self.timeout, **kwargs)
+            return func(url, timeout=timeout, **kwargs)
         except ConnectionError as e:
             six.reraise(NodeServerConnectionError, NodeServerConnectionError(url, *e.args), sys.exc_info()[2])
         except (ReadTimeout, Timeout) as e:
@@ -246,6 +249,7 @@ class NodeServer(object):
             response = self._send_request(
                 requests.get,
                 absolute_url,
+                timeout=self.test_timeout,
             )
         except (NodeServerConnectionError, NodeServerTimeoutError):
             return False

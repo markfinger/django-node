@@ -69,5 +69,10 @@ SERVER_PORT = setting_overrides.get(
 
 SERVER_TIMEOUT = setting_overrides.get(
     'SERVER_MAX_TIMEOUT',
+    10.0,
+)
+
+SERVER_TEST_TIMEOUT = setting_overrides.get(
+    'SERVER_TEST_TIMEOUT',
     2.0,
 )

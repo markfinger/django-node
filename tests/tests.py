@@ -180,12 +180,23 @@ class TestDjangoNode(unittest.TestCase):
         for endpoint in server._blacklisted_endpoints:
             self.assertRaises(NodeServerError, server.add_service, endpoint, TEST_SERVICE_PATH_TO_SOURCE)
 
-    def test_node_server_process_can_use_rely_on_externally_controlled_processes(self):
+    def test_node_server_process_can_rely_on_externally_controlled_processes(self):
         self.assertFalse(server.test())
         new_server = NodeServer()
         new_server.start()
         self.assertTrue(server.test())
         new_server.stop()
+        self.assertFalse(new_server.test())
+
+    def test_node_server_processes_do_not_shutdown_until_all_processes_have_indicated_they_are_done(self):
+        self.assertFalse(server.test())
+        new_server = NodeServer()
+        new_server.start()
+        self.assertTrue(server.test())
+        new_server.stop()
+        self.assertFalse(new_server.test())
+        self.assertTrue(server.test())
+        server.stop()
         self.assertFalse(server.test())
 
     def test_node_server_process_can_raise_on_port_collisions(self):
@@ -214,4 +225,8 @@ class TestDjangoNode(unittest.TestCase):
 
     def test_node_server_throws_timeout_on_long_running_services(self):
         service = server.add_service('/long-running-service', TIMEOUT_SERVICE_PATH_TO_SOURCE)
+        # Temporarily lower the timeout threshold
+        default_timeout = server.timeout
+        server.timeout = 2
         self.assertRaises(NodeServerTimeoutError, service)
+        server.timeout = default_timeout
