@@ -1,6 +1,6 @@
-var handler = function(req, res) {
+var service = function(request, response) {
 	// Returns the value of the output param
-	res.send(req.query.output);
+	response.send(request.query.output);
 };
 
-module.exports = handler;
+module.exports = service;

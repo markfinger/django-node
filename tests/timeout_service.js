@@ -1,9 +1,9 @@
 // This service should cause a timeout exception to be raised
 
-var handler = function(req, res) {
+var service = function(request, response) {
 	setTimeout(function() {
-		res.send(500, 'timeout should have occurred already')
-	}, 10000);
+		response.send(500, 'timeout should have occurred already')
+	}, 11000);
 };
 
-module.exports = handler;
+module.exports = service;
