@@ -7,7 +7,10 @@ setup(
     version=VERSION,
     packages=find_packages(exclude=('test', 'example',)),
     package_data={
-        'django_node': [],
+        'django_node': [
+            'node_server.js',
+            'package.json',
+        ],
     },
     install_requires=[
         'django',
