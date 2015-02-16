@@ -218,6 +218,7 @@ class NodeServer(object):
 
     def _send_request(self, func, url, **kwargs):
         timeout = kwargs.pop('timeout', self.timeout)
+
         try:
             return func(url, timeout=timeout, **kwargs)
         except ConnectionError as e:
