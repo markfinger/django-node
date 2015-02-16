@@ -10,8 +10,8 @@ from requests.exceptions import ConnectionError, ReadTimeout, Timeout
 from django.utils import six
 from . import node, npm
 from .settings import (
-    PATH_TO_NODE, SERVER_ADDRESS, SERVER_PORT, SERVER_TIMEOUT, SERVER_TEST_TIMEOUT, NODE_VERSION_REQUIRED,
-    NPM_VERSION_REQUIRED,
+    PATH_TO_NODE, SERVER_PROTOCOL, SERVER_ADDRESS, SERVER_PORT, SERVER_TIMEOUT, SERVER_TEST_TIMEOUT,
+    NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
 )
 from .exceptions import (
     NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerError, ErrorAddingService,
@@ -26,7 +26,7 @@ class NodeServer(object):
     and responds over HTTP
     """
 
-    protocol = 'http'
+    protocol = SERVER_PROTOCOL
     address = SERVER_ADDRESS
     port = SERVER_PORT
     path_to_source = os.path.join(os.path.dirname(__file__), 'node_server.js')

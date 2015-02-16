@@ -57,6 +57,11 @@ SERVER = setting_overrides.get(
     'django_node.node_server.NodeServer',
 )
 
+SERVER_PROTOCOL = setting_overrides.get(
+    'SERVER_PROTOCOL',
+    'http',
+)
+
 SERVER_ADDRESS = setting_overrides.get(
     'SERVER_ADDRESS',
     '127.0.0.1',
