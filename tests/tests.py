@@ -187,16 +187,6 @@ class TestDjangoNode(unittest.TestCase):
         self.assertTrue(server.test())
         new_server.stop()
         self.assertFalse(new_server.test())
-
-    def test_node_server_processes_do_not_shutdown_until_all_processes_have_indicated_they_are_done(self):
-        self.assertFalse(server.test())
-        new_server = NodeServer()
-        new_server.start()
-        self.assertTrue(server.test())
-        new_server.stop()
-        self.assertFalse(new_server.test())
-        self.assertTrue(server.test())
-        server.stop()
         self.assertFalse(server.test())
 
     def test_node_server_process_can_raise_on_port_collisions(self):
