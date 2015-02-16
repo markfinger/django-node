@@ -58,6 +58,13 @@ Installation
 pip install django-node
 ```
 
+Add `'django_node'` to your `INSTALLED_APPS`
+
+INSTALLED_APPS = (
+    # ...
+    'django_node',
+)
+
 
 Node.js
 -------
