@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-VERSION = '2.4.0'
+VERSION = '3.0.0'
 
 setup(
     name='django-node',
     version=VERSION,
-    packages=find_packages(exclude=('test', 'example',)),
+    packages=find_packages(exclude=('tests', 'example',)),
     package_data={
         'django_node': [
             'node_server.js',
