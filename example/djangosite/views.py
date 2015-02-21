@@ -1,14 +1,11 @@
-import os
 from django.http import HttpResponse
-from django_node.server import server
+from .services import HelloWorldService
 
-
-hello_world_service = server.add_service(
-    '/hello-world',
-    os.path.join(os.path.dirname(__file__), 'hello_world.js')
-)
+hello_world_service = HelloWorldService()
 
 
 def hello_world(request):
-    content = hello_world_service(name='World')
-    return HttpResponse(content)
+    response = hello_world_service.send(
+        name='World'
+    )
+    return HttpResponse(response.text)

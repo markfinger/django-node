@@ -2,6 +2,7 @@ import sys
 import subprocess
 import tempfile
 import importlib
+import re
 from django.utils import six
 from .settings import (
     PATH_TO_NODE, PATH_TO_NPM, NODE_VERSION_COMMAND, NODE_VERSION_FILTER, NPM_VERSION_COMMAND, NPM_VERSION_FILTER,
@@ -142,35 +143,71 @@ def raise_if_dependency_version_less_than(application, required_version):
         )
     
 
-def dynamic_import(import_path):
-    module_import_path = '.'.join(import_path.split('.')[:-1])
+def dynamic_import_module(import_path):
     try:
-        imported_module = importlib.import_module(module_import_path)
-        imported_object = getattr(imported_module, import_path.split('.')[-1])
-    except (ImportError, AttributeError) as e:
+        return importlib.import_module(import_path)
+    except ImportError as e:
         msg = 'Failed to import "{import_path}"'.format(
             import_path=import_path
         )
         six.reraise(DynamicImportError, DynamicImportError(msg, e.__class__.__name__, *e.args), sys.exc_info()[2])
-    return imported_object
 
 
-_html_unescape = None
-if six.PY2:
-    import HTMLParser
-    h = HTMLParser.HTMLParser()
-    _html_unescape = h.unescape
-elif six.PY3:
+def dynamic_import_attribute(import_path):
+    module_import_path = '.'.join(import_path.split('.')[:-1])
+    imported_module = dynamic_import_module(module_import_path)
     try:
-        import html.parser
-        h = html.parser.HTMLParser()
-        _html_unescape = h.unescape
-    except ImportError:  # Py3.4+
-        import html
-        _html_unescape = html.unescape
+        return getattr(imported_module, import_path.split('.')[-1])
+    except AttributeError as e:
+        msg = 'Failed to import "{import_path}"'.format(
+            import_path=import_path
+        )
+        six.reraise(DynamicImportError, DynamicImportError(msg, e.__class__.__name__, *e.args), sys.exc_info()[2])
+
+html_entity_map = {
+    '&nbsp;': ' ',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&amp;': '&',
+    '&lsquo;': '\'',
+    '&rsquo;': '\'',
+    '&quot;;': '"',
+    '&ldquo;': '"',
+    '&rdquo;': '"',
+    '&ndash;': '-',
+    '&mdash;': '-',
+    '&acute;': '`',
+}
 
 
-def html_unescape(string):
-    if _html_unescape:
-        return _html_unescape(string).encode('utf-8')
-    return string
+# The various HTML decoding solutions that are proposed by the
+# python community seem to have issues where they introduce
+# unicode characters which are ultimately rendered as the
+# encoded form. This solution is not desirable, but works.
+def decode_html_entities(html):
+    """
+    Decodes a limited set of HTML entities.
+    """
+    if not html:
+        return html
+
+    for entity, text in six.iteritems(html_entity_map):
+        html = html.replace(entity, text)
+
+    return html
+
+
+def convert_html_to_plain_text(html):
+    if not html:
+        return html
+
+    if six.PY2:
+        html = html.decode('utf-8')
+
+    html = decode_html_entities(html)
+    # Replace HTML break rules with new lines
+    html = html.replace('<br>', '\n')
+    # Remove multiple spaces
+    html = re.sub(' +', ' ', html)
+
+    return html

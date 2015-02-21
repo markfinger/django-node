@@ -46,5 +46,13 @@ class NodeServerError(Exception):
     pass
 
 
-class ErrorAddingService(Exception):
+class ServiceSourceDoesNotExist(Exception):
+    pass
+
+
+class MalformedServiceName(Exception):
+    pass
+
+
+class ServerConfigMissingService(Exception):
     pass

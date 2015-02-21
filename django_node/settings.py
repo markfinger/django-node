@@ -1,3 +1,4 @@
+import os
 from django.conf import settings
 
 setting_overrides = getattr(settings, 'DJANGO_NODE', {})
@@ -67,13 +68,20 @@ SERVER_ADDRESS = setting_overrides.get(
     '127.0.0.1',
 )
 
-SERVER_PORT = setting_overrides.get(
-    'SERVER_PORT',
-    '63578',
+SERVER_PORT = os.environ.get('DJANGO_NODE_SERVER_PORT', None)
+if SERVER_PORT is None:
+    SERVER_PORT = setting_overrides.get(
+        'SERVER_PORT',
+        '63578',
+    )
+
+SERVICES = setting_overrides.get(
+    'SERVICES',
+    (),
 )
 
-SERVER_TIMEOUT = setting_overrides.get(
-    'SERVER_MAX_TIMEOUT',
+SERVICE_TIMEOUT = setting_overrides.get(
+    'SERVICE_TIMEOUT',
     10.0,
 )
 
