@@ -1,12 +1,13 @@
 Django Node Example
 ===================
 
-The example project illustrates a simple way to integrate serverside
-execution of JS a Python process.
+The example project illustrates a simple way to integrate server-side
+execution of JS into a Python process.
 
 The relevant parts are:
 - [djangosite/views.py](djangosite/views.py)
-- [djangosite/hello_world.js](djangosite/hello_world.js)
+- [djangosite/services.py](djangosite/services.py)
+- [djangosite/services/hello_world.js](djangosite/services/hello_world.js)
 
 Running the example
 -------------------
