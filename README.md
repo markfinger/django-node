@@ -77,7 +77,7 @@ The `django_node.node` module provides utils for introspecting and calling Node.
 
 ### django_node.node.run()
 
-A method which will invoke Node.js with the arguments provided and return the resulting stderr and stdout.
+Invokes Node with the arguments provided and return the resulting stderr and stdout.
 
 Accepts an optional keyword argument, `production`, which will ensure that the command is run
 with the `NODE_ENV` environment variable set to 'production'.
@@ -93,12 +93,11 @@ stderr, stdout = node.run('/path/to/some/file.js', '--some-argument', production
 
 ### django_node.node.ensure_installed()
 
-A method which will raise an exception if Node.js is not installed.
+Raises an exception if Node is not installed.
 
 ### django_node.node.ensure_version_gte()
 
-A method which will raise an exception if the installed version of Node.js is
-less than the version required.
+Raises an exception if the installed version of Node is less than the version required.
 
 Arguments:
 
@@ -107,9 +106,7 @@ Arguments:
 ```python
 from django_node import node
 
-node_version_required = (0, 10, 0)
-
-node.ensure_version_gte(node_version_required)
+node.ensure_version_gte((0, 10, 0,))
 ```
 
 ### django_node.node.is_installed
@@ -132,31 +129,22 @@ The `django_node.npm` module provides utils for introspecting and calling NPM.
 
 ### django_node.npm.install()
 
-A method that will invoke `npm install` in a specified directory. Optional arguments will be
-appended to the invoked command.
+Invokes NPM's install command in a specified directory.
 
 Arguments:
 
 - `target_dir`: a string pointing to the directory which the command will be invoked in.
-- `*args`: optional strings to append to the invoked command.
-- `silent`: an optional boolean indicating that NPM's output should not be printed to the terminal.
 
 ```python
 from django_node import npm
 
 # Install the dependencies in a particular directory
-stderr, stdout = npm.install('/path/to/some/directory/')
-
-# Install a dependency into a particular directory and persist it to the package.json file
-stderr, stdout = npm.install('/path/to/some/directory/', '--save', 'some-package')
-
-# Install dependencies but prevent NPM's output from being logged to the terminal
-stderr, stdout = npm.install('/path/to/some/directory/', silent=True)
+npm.install('/path/to/some/directory/')
 ```
 
 ### django_node.npm.run()
 
-A method which will invoke NPM with the arguments provided and return the resulting stderr and stdout.
+Invokes NPM with the arguments provided and returns the resulting stderr and stdout.
 
 ```python
 from django_node import npm
@@ -166,12 +154,11 @@ stderr, stdout = npm.run('install', '--save', 'some-package')
 
 ### django_node.npm.ensure_installed()
 
-A method which will raise an exception if NPM is not installed.
+Raises an exception if NPM is not installed.
 
 ### django_node.npm.ensure_version_gte()
 
-A method which will raise an exception if the installed version of NPM is
-less than the version required.
+Raises an exception if the installed version of NPM is less than the version required.
 
 Arguments:
 
@@ -180,9 +167,7 @@ Arguments:
 ```python
 from django_node import npm
 
-npm_version_required = (2, 0, 0)
-
-npm.ensure_version_gte(npm_version_required)
+npm.ensure_version_gte((2, 0, 0,))
 ```
 
 ### django_node.npm.is_installed

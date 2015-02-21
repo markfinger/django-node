@@ -66,15 +66,6 @@ npm_installed, npm_version, npm_version_raw = _interrogate(
     NPM_VERSION_FILTER,
 )
 
-_missing_dependency_error_message = '{application} is not installed or cannot be found at path "{path}".'
-
-_version_required_error_message = 'Version {required_version} or greater is required.'
-
-_outdated_version_error_message = (
-    'The installed {application} version is outdated. Version {current_version} is installed, but version '
-    '{required_version} is required. Please update {application}.'
-)
-
 NPM_NAME = 'NPM'
 NODE_NAME = 'Node.js'
 
@@ -117,12 +108,12 @@ def raise_if_dependency_missing(application, required_version=None):
         is_installed = node_installed
         path = PATH_TO_NODE
     if not is_installed:
-        error = _missing_dependency_error_message.format(
+        error = '{application} is not installed or cannot be found at path "{path}".'.format(
             application=application,
             path=path,
         )
         if required_version:
-            error += _version_required_error_message.format(
+            error += 'Version {required_version} or greater is required.'.format(
                 required_version=_format_version(required_version)
             )
         raise MissingDependency(error)
@@ -135,7 +126,10 @@ def raise_if_dependency_version_less_than(application, required_version):
         current_version = node_version
     if _check_if_version_is_outdated(current_version, required_version):
         raise OutdatedDependency(
-            _outdated_version_error_message.format(
+            (
+                'The installed {application} version is outdated. Version {current_version} is installed, but version '
+                '{required_version} is required. Please update {application}.'
+            ).format(
                 application=application,
                 current_version=_format_version(current_version),
                 required_version=_format_version(required_version),
@@ -180,10 +174,10 @@ html_entity_map = {
 }
 
 
-# The various HTML decoding solutions that are proposed by the
-# python community seem to have issues where they introduce
-# unicode characters which are ultimately rendered as the
-# encoded form. This solution is not desirable, but works.
+# The various HTML decoding solutions that are proposed by
+# the python community seem to have issues where the unicode
+# characters are printed in encoded form. This solution is
+# not desirable, but works for django-node's purposes.
 def decode_html_entities(html):
     """
     Decodes a limited set of HTML entities.
@@ -191,8 +185,8 @@ def decode_html_entities(html):
     if not html:
         return html
 
-    for entity, text in six.iteritems(html_entity_map):
-        html = html.replace(entity, text)
+    for entity, char in six.iteritems(html_entity_map):
+        html = html.replace(entity, char)
 
     return html
 
@@ -211,3 +205,17 @@ def convert_html_to_plain_text(html):
     html = re.sub(' +', ' ', html)
 
     return html
+
+
+def resolve_dependencies(node_version_required=None, npm_version_required=None, path_to_run_npm_install_in=None):
+    from . import node, npm  # Avoid a circular import
+
+    # Ensure that the external dependencies are met
+    if node_version_required is not None:
+        node.ensure_version_gte(node_version_required)
+    if npm_version_required is not None:
+        npm.ensure_version_gte(npm_version_required)
+
+    # Ensure that the required packages have been installed
+    if path_to_run_npm_install_in is not None:
+        npm.install(path_to_run_npm_install_in)

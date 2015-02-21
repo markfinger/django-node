@@ -14,10 +14,6 @@ class MalformedVersionInput(Exception):
     pass
 
 
-class NpmInstallError(Exception):
-    pass
-
-
 class NpmInstallArgumentsError(Exception):
     pass
 

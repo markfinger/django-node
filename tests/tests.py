@@ -117,26 +117,10 @@ class TestDjangoNode(unittest.TestCase):
         stdout = stdout.strip()
         self.assertEqual(stdout, npm.version_raw)
 
-    def test_npm_install_installs_packages(self):
-        stderr, stdout = npm.install(TEST_DIR, silent=True)
+    def test_npm_install_can_install_dependencies(self):
+        npm.install(TEST_DIR)
         self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
         self.assertTrue(os.path.exists(PATH_TO_INSTALLED_PACKAGE))
-        self.assertIn(DEPENDENCY_PACKAGE, stdout)
-
-    def test_npm_install_can_install_a_specific_package(self):
-        stderr, stdout = npm.install(TEST_DIR, PACKAGE_TO_INSTALL, silent=True)
-        self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
-        self.assertTrue(os.path.exists(PATH_TO_PACKAGE_TO_INSTALL))
-        self.assertIn(PACKAGE_TO_INSTALL, stdout)
-
-    def test_npm_install_can_install_a_specific_package_and_save_to_package_json(self):
-        stderr, stdout = npm.install(TEST_DIR, PACKAGE_TO_INSTALL, '--save', silent=True)
-        self.assertTrue(os.path.exists(PATH_TO_NODE_MODULES))
-        self.assertTrue(os.path.exists(PATH_TO_PACKAGE_TO_INSTALL))
-        self.assertIn(PACKAGE_TO_INSTALL, stdout)
-        package_json_contents = self.read_package_json()
-        package_json = json.loads(package_json_contents)
-        self.assertIn('jquery', package_json['dependencies'])
 
     def test_node_server_services_can_be_validated(self):
         class MissingSource(BaseService):
