@@ -38,7 +38,7 @@ class NodeServerTimeoutError(Exception):
     pass
 
 
-class NodeServerError(Exception):
+class NodeServiceError(Exception):
     pass
 
 

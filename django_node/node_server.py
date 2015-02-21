@@ -13,7 +13,6 @@ if six.PY2:
     from urlparse import urljoin
 elif six.PY3:
     from urllib.parse import urljoin
-from . import node, npm
 from .base_service import BaseService
 from .services import EchoService
 from .settings import (
@@ -21,10 +20,9 @@ from .settings import (
     SERVICES,
 )
 from .exceptions import (
-    NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerError,
-    NodeServerTimeoutError,
+    NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerTimeoutError,
 )
-from .utils import dynamic_import_module, convert_html_to_plain_text
+from .utils import dynamic_import_module, resolve_dependencies
 
 
 class NodeServer(object):
@@ -48,13 +46,21 @@ class NodeServer(object):
 
     def __init__(self):
         if self.resolve_dependencies_on_init:
-            # Ensure that the external dependencies are met
-            node.ensure_version_gte(NODE_VERSION_REQUIRED)
-            npm.ensure_version_gte(NPM_VERSION_REQUIRED)
-            # Ensure that the required packages have been installed
-            npm.install(os.path.dirname(__file__))
+            resolve_dependencies(
+                node_version_required=NODE_VERSION_REQUIRED,
+                npm_version_required=NPM_VERSION_REQUIRED,
+                path_to_run_npm_install_in=os.path.dirname(__file__)
+            )
 
-        # Import the services configured in settings
+        self.discover_services()
+
+        if self.start_on_init:
+            self.start()
+
+    def discover_services(self):
+        """
+        Import the services defined in django_node.settings.SERVICES
+        """
         for import_path in SERVICES:
             module = dynamic_import_module(import_path)
             for attr_name in dir(module):
@@ -62,9 +68,6 @@ class NodeServer(object):
                 if inspect.isclass(service) and service is not BaseService and issubclass(service, BaseService):
                     service.validate()
                     self.services += (service,)
-
-        if self.start_on_init:
-            self.start()
 
     def get_config(self):
         services = ()
@@ -221,18 +224,8 @@ class NodeServer(object):
         absolute_url = urljoin(self.get_server_url(), endpoint)
 
         try:
-            response = requests.get(absolute_url, timeout=timeout, params=params)
+            return requests.get(absolute_url, timeout=timeout, params=params)
         except ConnectionError as e:
             six.reraise(NodeServerConnectionError, NodeServerConnectionError(absolute_url, *e.args), sys.exc_info()[2])
         except (ReadTimeout, Timeout) as e:
             six.reraise(NodeServerTimeoutError, NodeServerTimeoutError(absolute_url, *e.args), sys.exc_info()[2])
-
-        if response.status_code != 200:
-            error_message = convert_html_to_plain_text(response.text)
-            message = 'Error at {endpoint}: {error_message}'
-            raise NodeServerError(message.format(
-                endpoint=endpoint,
-                error_message=error_message,
-            ))
-
-        return response

@@ -1,14 +1,13 @@
 import os
 import shutil
 import unittest
-import json
 from django.utils import six
 from django_node import node, npm
 from django_node.node_server import NodeServer
 from django_node.server import server
 from django_node.base_service import BaseService
 from django_node.exceptions import (
-    OutdatedDependency, MalformedVersionInput, NodeServerError, NodeServerAddressInUseError, NodeServerTimeoutError,
+    OutdatedDependency, MalformedVersionInput, NodeServiceError, NodeServerAddressInUseError, NodeServerTimeoutError,
     ServiceSourceDoesNotExist, MalformedServiceName
 )
 from django_node.services import EchoService
@@ -199,7 +198,7 @@ class TestDjangoNode(unittest.TestCase):
         self.assertRaises(NodeServerTimeoutError, timeout_service.send)
 
     def test_node_server_error_service_works(self):
-        self.assertRaises(NodeServerError, error_service.send)
+        self.assertRaises(NodeServiceError, error_service.send)
 
     def test_node_server_config_management_command_provides_the_expected_output(self):
         from django_node.management.commands.node_server_config import Command

@@ -1,11 +1,14 @@
 import os
 from django.utils import six
 if six.PY2:
+    from urlparse import urljoin
     from urlparse import urlparse
 elif six.PY3:
     from urllib.parse import urlparse
-from .exceptions import ServiceSourceDoesNotExist, MalformedServiceName, ServerConfigMissingService
+    from urllib.parse import urljoin
+from .exceptions import ServiceSourceDoesNotExist, MalformedServiceName, ServerConfigMissingService, NodeServiceError
 from .settings import SERVICE_TIMEOUT
+from .utils import convert_html_to_plain_text
 
 
 class BaseService(object):
@@ -22,7 +25,7 @@ class BaseService(object):
 
         # Ensure that the name is a relative url starting with `/`
         name = cls.get_name()
-        if urlparse(name).netloc or not name.startswith('/'):
+        if urlparse(name).netloc or not name.startswith('/') or name == '/':
             raise MalformedServiceName(name)
 
     @classmethod
@@ -35,9 +38,7 @@ class BaseService(object):
             class_name=cls.__name__,
         )
 
-        cls.name = '/{url}'.format(
-            url=python_path.replace('.', '/')
-        )
+        cls.name = urljoin('/', python_path.replace('.', '/'))
 
         return cls.name
 
@@ -54,14 +55,27 @@ class BaseService(object):
 
         return self.server
 
-    def send(self, **kwargs):
-        server = self.get_server()
+    def handle_response(self, response):
+        if response.status_code != 200:
+            error_message = convert_html_to_plain_text(response.text)
+            message = 'Error at {name}: {error_message}'
+            raise NodeServiceError(message.format(
+                name=self.get_name(),
+                error_message=error_message,
+            ))
+        return response
 
-        if self.__class__ not in server.services:
+    def ensure_loaded(self):
+        if self.__class__ not in self.get_server().services:
             raise ServerConfigMissingService(self.__class__)
 
-        return self.server.get_service(
+    def send(self, **kwargs):
+        self.ensure_loaded()
+
+        response = self.server.get_service(
             self.get_name(),
             timeout=self.timeout,
             params=kwargs
         )
+
+        return self.handle_response(response)

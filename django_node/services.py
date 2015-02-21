@@ -5,11 +5,21 @@ from .settings import SERVER_TEST_TIMEOUT
 
 
 class EchoService(BaseService):
+    """
+    A basic service which will return the value of the parameter
+    `echo` as the response.
+
+    Internally, NodeServer uses this service to test if the server
+    is running as expected.
+    """
+
     path_to_source = os.path.join(os.path.dirname(__file__), 'services', 'echo.js')
     timeout = SERVER_TEST_TIMEOUT
     expected_output = '__NODE_SERVER_RUNNING__'
 
     def test(self):
+        self.ensure_loaded()
+
         try:
             response = self.get_server().get_service(
                 self.get_name(),
