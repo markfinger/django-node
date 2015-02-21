@@ -5,7 +5,5 @@ hello_world_service = HelloWorldService()
 
 
 def hello_world(request):
-    response = hello_world_service.send(
-        name='World'
-    )
-    return HttpResponse(response.text)
+    content = hello_world_service.greet('World')
+    return HttpResponse(content)

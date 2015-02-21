@@ -5,8 +5,8 @@ The example project illustrates a simple way to integrate server-side
 execution of JS into a Python process.
 
 The relevant parts are:
-- [djangosite/views.py](djangosite/views.py)
 - [djangosite/services.py](djangosite/services.py)
+- [djangosite/views.py](djangosite/views.py)
 - [djangosite/services/hello_world.js](djangosite/services/hello_world.js)
 
 Running the example
