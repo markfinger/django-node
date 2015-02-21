@@ -1,7 +1,6 @@
 {
   "dependencies": {
-    "express": "^4.11.2",
-    "yargs": "^2.1.1"
+    "django-node-server": "git://github.com/markfinger/django-node-server#762ceb16d629752192c4b559b0fd9c3c775d6574"
   },
   "private": true
 }

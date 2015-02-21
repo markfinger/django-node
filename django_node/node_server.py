@@ -36,7 +36,7 @@ class NodeServer(object):
     protocol = SERVER_PROTOCOL
     address = SERVER_ADDRESS
     port = SERVER_PORT
-    path_to_source = os.path.join(os.path.dirname(__file__), 'node_server.js')
+    path_to_source = os.path.join(os.path.dirname(__file__), 'node_modules', 'django-node-server', 'index.js')
     start_on_init = False
     resolve_dependencies_on_init = True
     shutdown_on_exit = True
