@@ -70,7 +70,7 @@ class HelloWorldService(BaseService):
 Configure django-node to load your service by adding the service's module as a 
 dotstring to the `DJANGO_NODE['SERVICES']` setting.
 
-```
+```python
 # in settings.py
 
 DJANGO_NODE = {
