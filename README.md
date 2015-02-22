@@ -40,7 +40,7 @@ API documentation
 Basic usage
 -----------
 
-To create a JS service, define a function and export is a CommonJS module. 
+To create a JS service, define a function and export it as a module. 
 
 ```javascript
 var service = function(request, response) {
@@ -75,9 +75,9 @@ dotstring to the `DJANGO_NODE['SERVICES']` setting.
 
 DJANGO_NODE = {
     'SERVICES': (
-        'my_app.services',
-        # During initialisation django-node will import `some_app.services` and load in 
+    	# During initialisation django-node will import the modules in `SERVICES` and load in 
         # all the services which inherit from `django_node.base_service.BaseService`
+        'my_app.services',
     ),
 }
 ```
