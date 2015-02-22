@@ -16,9 +16,15 @@ Attributes
 
 ### django_node.npm.install()
 
-Invokes NPM's install command in a specified directory. A typical use case for `install` 
-is to ensure that dependencies are installed during a runtime initialisation. `install` 
-blocks the python process and will direct npm's output to stdout.
+Invokes NPM's install command in a specified directory. `install` blocks the python
+process and will direct npm's output to stdout.
+
+A typical use case for `install` is to ensure that your dependencies specified in
+a `package.json` file are installed during runtime. The first time that `install` is 
+run in a directory, it will block until the dependencies are installed to the file
+system, successive calls will resolve almost immediately. Installing your dependencies 
+at run time allows for projects and apps to easily maintain independent dependencies 
+which are resolved on demand.
 
 Arguments:
 
@@ -28,8 +34,11 @@ Arguments:
 import os
 from django_node import npm
 
-# Install the dependencies in a particular directory
+# Install the dependencies in a particular directory's package.json
 npm.install('/path/to/some/directory/')
+
+# Install the dependencies in the same directory as the current python file
+npm.install(os.path.dirname(__file__))
 ```
 
 ### django_node.npm.run()
