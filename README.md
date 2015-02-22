@@ -10,7 +10,9 @@ Using services opens up a number of possibilites which are difficult or impossib
 - Background processes, such as file watchers
 - WebSockets
 
-Additionally, django-node provides bindings and utilites to integrate Node and NPM into a Django application.
+Behind the scenes, django-node will connect to either a pre-existing instance of [django-node-server](https://github.com/markfinger/django-node-server) or will create an instance as a subprocess.
+
+Additionally, django-node provides a number of bindings and utilites to assist with integrating Node and NPM into a Django application.
 
 **Please note** that django-node is a work in progress. In particular, the JS services API is prone to change as issues are identified and fixed.
 
