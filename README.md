@@ -5,6 +5,21 @@ Django Node
 
 Bindings and utils for integrating Node.js and NPM into a Django application.
 
+Documentation
+-------------
+
+- [Basic usage](#basic-usage)
+- [Installation](#installation)
+- [NodeServer](blob/master/docs/node_server.md)
+- [Node](blob/master/docs/node.md)
+- [NPM](blob/master/docs/npm.md)
+- [Settings](blob/master/docs/settings.md)
+- [Running the tests](#running-the-tests)
+
+
+Basic usage
+-----------
+
 ```python
 from django_node import node, npm
 from django_node.server import server
@@ -21,16 +36,6 @@ service = server.add_service('/some-endpoint', '/path/to/some/file.js')
 # Pass data to your service and output the result
 print(service(some_param=10, another_param='foo').text)
 ```
-
-Documentation
--------------
-
-- [Installation](#installation)
-- [NodeServer](#nodeserver)
-- [Node](#node)
-- [NPM](#npm)
-- [Settings](#settings)
-- [Running the tests](#running-the-tests)
 
 
 Installation
