@@ -16,13 +16,16 @@ Attributes
 
 ### django_node.npm.install()
 
-Invokes NPM's install command in a specified directory.
+Invokes NPM's install command in a specified directory. A typical use case for `install` 
+is to ensure that dependencies are installed during a runtime initialisation. `install` 
+blocks the python process and will direct npm's output to stdout.
 
 Arguments:
 
 - `target_dir`: a string pointing to the directory which the command will be invoked in.
 
 ```python
+import os
 from django_node import npm
 
 # Install the dependencies in a particular directory
