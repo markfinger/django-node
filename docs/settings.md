@@ -11,6 +11,7 @@ DJANGO_NODE = {
 }
 ```
 
+**Settings**
 - [PATH_TO_NODE](#django_nodepath_to_node)
 - [NODE_VERSION_COMMAND](#django_nodenode_version_command)
 - [NODE_VERSION_FILTER](#django_nodenode_version_filter)
