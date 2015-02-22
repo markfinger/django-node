@@ -3,12 +3,12 @@ Node
 
 The `django_node.node` module provides utils for introspecting and calling [Node](http://nodejs.org/).
 
-Methods
+**Methods**
 - [django_node.node.run()](#django_nodenoderun)
 - [django_node.node.ensure_installed()](#django_nodenodeensure_installed)
 - [django_node.node.ensure_version_gte()](#django_nodenodeensure_version_gte)
 
-Attributes
+**Attributes**
 - [django_node.node.is_installed](#django_nodenodeis_installed)
 - [django_node.node.version](#django_nodenodeversion)
 - [django_node.node.version_raw](#django_nodenodeversion_raw)
