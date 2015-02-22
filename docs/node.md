@@ -50,12 +50,12 @@ node.ensure_version_gte((0, 10, 0,))
 
 ### django_node.node.is_installed
 
-A boolean indicating if Node.js is installed.
+A boolean indicating if Node is installed.
 
 ### django_node.node.version
 
-A tuple containing the version of Node.js installed. For example, `(0, 10, 33)`
+A tuple containing the version of Node installed. For example, `(0, 10, 33)`
 
 ### django_node.node.version_raw
 
-A string containing the raw version returned from Node.js. For example, `'v0.10.33'`
+A string containing the raw version returned from Node. For example, `'v0.10.33'`
