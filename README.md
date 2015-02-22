@@ -10,10 +10,10 @@ Documentation
 
 - [Basic usage](#basic-usage)
 - [Installation](#installation)
-- [NodeServer](blob/master/docs/node_server.md)
-- [Node](blob/master/docs/node.md)
-- [NPM](blob/master/docs/npm.md)
-- [Settings](blob/master/docs/settings.md)
+- [NodeServer](docs/node_server.md)
+- [Node](docs/node.md)
+- [NPM](docs/npm.md)
+- [Settings](docs/settings.md)
 - [Running the tests](#running-the-tests)
 
 
