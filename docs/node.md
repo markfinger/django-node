@@ -1,5 +1,5 @@
-django_node.node
-================
+Node
+====
 
 The `django_node.node` module provides utils for introspecting and calling [Node](http://nodejs.org/).
 
