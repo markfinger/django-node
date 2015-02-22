@@ -21,7 +21,7 @@ Invokes Node with the arguments provided and return the resulting stderr and std
 Accepts an optional keyword argument, `production`, which will ensure that the command is run
 with the `NODE_ENV` environment variable set to 'production'.
 
-```
+```python
 from django_node import node
 
 stderr, stdout = node.run('/path/to/some/file.js', '--some-argument')
