@@ -1,5 +1,5 @@
-django_node.npm
-===============
+NPM
+===
 
 The `django_node.npm` module provides utils for introspecting and calling [NPM](https://www.npmjs.com/).
 
