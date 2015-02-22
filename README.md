@@ -43,6 +43,8 @@ Basic usage
 To create a JS service, define a function and export it as a module. 
 
 ```javascript
+// my_app/hello_world_service.js
+
 var service = function(request, response) {
 	var name = request.query.name;
 	response.send(
@@ -56,11 +58,14 @@ module.exports = service;
 Create a python interface to your service by inheriting from `django_node.base_service.BaseService`.
 
 ```python
+# my_app/services.py
+
+import os
 from django_node.base_service import BaseService
 
 class HelloWorldService(BaseService):
-    # An absolute path to a file containing the above JS
-    path_to_source = '/path/to/file.js'
+    # An absolute path to a file containing the JS service
+    path_to_source = os.path.join(os.path.dirname(__file__), 'hello_world_service.js')
 
     def greet(self, name):
         response = self.send(name=name)
@@ -75,14 +80,16 @@ dotstring to the `DJANGO_NODE['SERVICES']` setting.
 
 DJANGO_NODE = {
     'SERVICES': (
-    	# During initialisation django-node will import the modules in `SERVICES` and load in 
-        # all the services which inherit from `django_node.base_service.BaseService`
-        'my_app.services',
+    	'my_app.services',
     ),
 }
 ```
 
-Send a request to your service and receive a response.
+During django-node's initialisation, the modules defined in `DJANGO_NODE['SERVICES']` are 
+imported and all of the classes contained which inherit from `django_node.base_service.BaseService` will be 
+loaded into a [django-node-server](https://github.com/markfinger/django-node-server) instance.
+
+You can now send a request to your service and receive a response.
 
 ```python
 hello_world_service = HelloWorldService()
@@ -96,16 +103,14 @@ Besides JS services, django-node also provides a number of bindings and utilitie
 interacting with Node and NPM.
 
 ```python
+import os
 from django_node import node, npm
 
 # Run a particular file with Node.js
 stderr, stdout = node.run('/path/to/some/file.js', '--some-argument', 'some_value')
 
-# Call `npm install` within a particular directory
-stderr, stdout = npm.install('/path/to/some/directory')
-
-# Install a package with NPM
-stderr, stdout = npm.run('install', 'jquery')
+# Call `npm install` within the current file's directory
+stderr, stdout = npm.install(os.path.dirname(__file__))
 ```
 
 
