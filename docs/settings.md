@@ -23,7 +23,7 @@ DJANGO_NODE = {
 
 ### DJANGO_NODE['PATH_TO_NODE']
 
-A path that will resolve to Node.js.
+A path that will resolve to Node.
 
 Default:
 ```python
@@ -32,7 +32,7 @@ Default:
 
 ### DJANGO_NODE['NODE_VERSION_COMMAND']
 
-The command invoked on Node.js to retrieve its version.
+The command invoked on Node to retrieve its version.
 
 Default:
 ```python
@@ -42,7 +42,7 @@ Default:
 ### DJANGO_NODE['NODE_VERSION_FILTER']
 
 A function which will generate a tuple of version numbers from
-the raw version string returned from Node.js.
+the raw version string returned from Node.
 
 Default
 ```python
