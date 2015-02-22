@@ -3,13 +3,13 @@ NPM
 
 The `django_node.npm` module provides utils for introspecting and calling [NPM](https://www.npmjs.com/).
 
-Methods
+**Methods**
 - [django_node.npm.install()](#django_nodenpminstall)
 - [django_node.npm.run()](#django_nodenpmrun)
 - [django_node.npm.ensure_installed()](#django_nodenpmensure_installed)
 - [django_node.npm.ensure_version_gte()](#django_nodenpmensure_version_gte)
 
-Attributes
+**Attributes**
 - [django_node.npm.is_installed](#django_nodenpmis_installed)
 - [django_node.npm.version](#django_nodenpmversion)
 - [django_node.npm.version_raw](#django_nodenpmversion_raw)
