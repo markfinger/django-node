@@ -1,11 +1,8 @@
 Settings
 ========
 
-Settings can be overridden by defining a dictionary named `DJANGO_NODE` in your settings file.
-
+Settings can be overridden by defining a dictionary named `DJANGO_NODE` in your settings file. For example:
 ```python
-# Example
-
 DJANGO_NODE = {
     'PATH_TO_NODE': '/path/to/some/binary',
 }
