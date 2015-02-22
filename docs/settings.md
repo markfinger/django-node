@@ -1,5 +1,5 @@
-django_node.settings
-====================
+Settings
+========
 
 Settings can be overridden by defining a dictionary named `DJANGO_NODE` in your settings file.
 
