@@ -23,12 +23,7 @@ def ensure_version_gte(required_version):
 
 def run(*args):
     ensure_installed()
-    command = (PATH_TO_NPM,) + tuple(args)
-
-    if NPM_INSTALL_PATH_TO_PYTHON:
-        command += ('--python={path_to_python}'.format(path_to_python=NPM_INSTALL_PATH_TO_PYTHON),)
-
-    return run_command(command)
+    return run_command((PATH_TO_NPM,) + tuple(args))
 
 
 def install(target_dir):
@@ -41,4 +36,9 @@ def install(target_dir):
 
     ensure_installed()
 
-    subprocess.call((PATH_TO_NPM, NPM_INSTALL_COMMAND), cwd=target_dir)
+    command = (PATH_TO_NPM, NPM_INSTALL_COMMAND)
+
+    if NPM_INSTALL_PATH_TO_PYTHON:
+        command += ('--python={path_to_python}'.format(path_to_python=NPM_INSTALL_PATH_TO_PYTHON),)
+
+    subprocess.call(command, cwd=target_dir)
