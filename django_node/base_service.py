@@ -1,4 +1,5 @@
 import os
+import warnings
 from django.utils import six
 if six.PY2:
     from urlparse import urljoin
@@ -7,15 +8,30 @@ elif six.PY3:
     from urllib.parse import urlparse
     from urllib.parse import urljoin
 from .exceptions import ServiceSourceDoesNotExist, MalformedServiceName, ServerConfigMissingService, NodeServiceError
-from .settings import SERVICE_TIMEOUT
+from .settings import SERVICES, SERVICE_TIMEOUT
 from .utils import convert_html_to_plain_text
+from .package_dependent import PackageDependent
 
 
-class BaseService(object):
+class BaseService(PackageDependent):
     path_to_source = None
+    package_dependencies = None
     name = None
     server = None
     timeout = SERVICE_TIMEOUT
+
+    def __init__(self):
+        super(BaseService, self).__init__()
+        self.warn_if_not_configured()
+
+    @classmethod
+    def warn_if_not_configured(cls):
+        if cls.__module__ not in SERVICES:
+            service_warning = (
+                '{class_name} has been instantiated, but the module "{module}" is missing from '
+                'the SERVICES setting.'
+            ).format(class_name=cls, module=cls.__module__)
+            warnings.warn(service_warning)
 
     @classmethod
     def validate(cls):

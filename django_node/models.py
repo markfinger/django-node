@@ -1,0 +1,5 @@
+from .settings import INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME, PACKAGE_DEPENDENCIES
+from .package_dependent import install_configured_package_dependencies
+
+if INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME and PACKAGE_DEPENDENCIES:
+    install_configured_package_dependencies()

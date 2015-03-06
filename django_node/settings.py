@@ -1,4 +1,5 @@
 import os
+import sys
 from django.conf import settings
 
 setting_overrides = getattr(settings, 'DJANGO_NODE', {})
@@ -68,6 +69,7 @@ SERVER_ADDRESS = setting_overrides.get(
     '127.0.0.1',
 )
 
+# Read in the server port from a `DJANGO_NODE_SERVER_PORT` environment variable
 SERVER_PORT = os.environ.get('DJANGO_NODE_SERVER_PORT', None)
 if SERVER_PORT is None:
     SERVER_PORT = setting_overrides.get(
@@ -89,3 +91,24 @@ SERVER_TEST_TIMEOUT = setting_overrides.get(
     'SERVER_TEST_TIMEOUT',
     2.0,
 )
+
+PACKAGE_DEPENDENCIES = setting_overrides.get(
+    'PACKAGE_DEPENDENCIES',
+    ()
+)
+
+INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = setting_overrides.get(
+    'INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME',
+    True,
+)
+
+# Prevent dependencies from being installed during init if
+# either of the package dependency commands are being run
+for i, arg in enumerate(sys.argv):
+    if (
+        arg.endswith('manage.py') and
+        len(sys.argv) > i and
+        sys.argv[i + 1] in ('uninstall_package_dependencies', 'install_package_dependencies')
+    ):
+        INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = False
+        break

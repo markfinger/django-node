@@ -17,6 +17,10 @@ class EchoService(BaseService):
     timeout = SERVER_TEST_TIMEOUT
     expected_output = '__NODE_SERVER_RUNNING__'
 
+    @classmethod
+    def warn_if_not_configured(cls):
+        pass
+
     def test(self):
         self.ensure_loaded()
 

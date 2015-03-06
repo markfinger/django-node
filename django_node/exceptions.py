@@ -52,3 +52,11 @@ class MalformedServiceName(Exception):
 
 class ServerConfigMissingService(Exception):
     pass
+
+
+class MalformedServiceConfig(Exception):
+    pass
+
+
+class ModuleDoesNotContainAnyServices(Exception):
+    pass

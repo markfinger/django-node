@@ -21,11 +21,13 @@ from .settings import (
 )
 from .exceptions import (
     NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerTimeoutError,
+    MalformedServiceConfig, ModuleDoesNotContainAnyServices
 )
 from .utils import dynamic_import_module, resolve_dependencies
+from .package_dependent import PackageDependent
 
 
-class NodeServer(object):
+class NodeServer(PackageDependent):
     """
     A persistent Node server which sits alongside the python process
     and responds over HTTP
@@ -35,39 +37,46 @@ class NodeServer(object):
     address = SERVER_ADDRESS
     port = SERVER_PORT
     path_to_source = os.path.join(os.path.dirname(__file__), 'node_modules', 'django-node-server', 'index.js')
-    start_on_init = False
+    package_dependencies = os.path.dirname(__file__)
     resolve_dependencies_on_init = True
     shutdown_on_exit = True
     is_running = False
     logger = logging.getLogger(__name__)
     echo_service = EchoService()
     services = (EchoService,)
+    service_config = SERVICES
     process = None
 
     def __init__(self):
+        super(NodeServer, self).__init__()
         if self.resolve_dependencies_on_init:
             resolve_dependencies(
                 node_version_required=NODE_VERSION_REQUIRED,
                 npm_version_required=NPM_VERSION_REQUIRED,
-                path_to_run_npm_install_in=os.path.dirname(__file__)
             )
-
         self.discover_services()
 
-        if self.start_on_init:
-            self.start()
-
     def discover_services(self):
-        """
-        Import the services defined in django_node.settings.SERVICES
-        """
-        for import_path in SERVICES:
+        if not isinstance(self.service_config, tuple):
+            raise MalformedServiceConfig(
+                'DJANGO_NODE[\'SERVICES\'] setting must be a tuple. Found "{setting}"'.format(setting=SERVICES)
+            )
+        for import_path in self.service_config:
             module = dynamic_import_module(import_path)
+            module_contains_services = False
             for attr_name in dir(module):
                 service = getattr(module, attr_name)
-                if inspect.isclass(service) and service is not BaseService and issubclass(service, BaseService):
+                if (
+                    inspect.isclass(service) and
+                    service is not BaseService and
+                    issubclass(service, BaseService) and
+                    service not in self.services
+                ):
                     service.validate()
                     self.services += (service,)
+                    module_contains_services = True
+            if not module_contains_services:
+                raise ModuleDoesNotContainAnyServices(import_path)
 
     def get_config(self):
         services = ()
