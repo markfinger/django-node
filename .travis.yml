@@ -18,6 +18,5 @@ install:
   - "npm install -g npm"
   - "pip install Django==$DJANGO_VERSION"
   - "pip install -r requirements.txt"
-  - "pip install ."
 
 script: python runtests.py
