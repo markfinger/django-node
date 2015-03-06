@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "django-node-server": "git://github.com/markfinger/django-node-server#762ceb16d629752192c4b559b0fd9c3c775d6574"
+    "django-node-server": "git://github.com/markfinger/django-node-server#6a941e09b46e12237137b7324556e88b7f6828c4"
   },
   "private": true
 }
