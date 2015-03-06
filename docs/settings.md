@@ -1,16 +1,14 @@
-django_node.settings
-====================
+Settings
+========
 
-Settings can be overridden by defining a dictionary named `DJANGO_NODE` in your settings file.
-
+Settings can be overridden by defining a dictionary named `DJANGO_NODE` in your settings file. For example:
 ```python
-# Example
-
 DJANGO_NODE = {
     'PATH_TO_NODE': '/path/to/some/binary',
 }
 ```
 
+**Settings**
 - [PATH_TO_NODE](#django_nodepath_to_node)
 - [NODE_VERSION_COMMAND](#django_nodenode_version_command)
 - [NODE_VERSION_FILTER](#django_nodenode_version_filter)
@@ -22,7 +20,7 @@ DJANGO_NODE = {
 
 ### DJANGO_NODE['PATH_TO_NODE']
 
-A path that will resolve to Node.js.
+A path that will resolve to Node.
 
 Default:
 ```python
@@ -31,7 +29,7 @@ Default:
 
 ### DJANGO_NODE['NODE_VERSION_COMMAND']
 
-The command invoked on Node.js to retrieve its version.
+The command invoked on Node to retrieve its version.
 
 Default:
 ```python
@@ -41,7 +39,7 @@ Default:
 ### DJANGO_NODE['NODE_VERSION_FILTER']
 
 A function which will generate a tuple of version numbers from
-the raw version string returned from Node.js.
+the raw version string returned from Node.
 
 Default
 ```python
