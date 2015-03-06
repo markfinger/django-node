@@ -25,6 +25,7 @@ def uninstall_configured_package_dependencies():
 
 
 class PackageDependent(object):
+    # An optional path to a directory containing a package.json file
     package_dependencies = None
 
     def __init__(self):

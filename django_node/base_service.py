@@ -15,7 +15,6 @@ from .package_dependent import PackageDependent
 
 class BaseService(PackageDependent):
     path_to_source = None
-    package_dependencies = None
     name = None
     server = None
     timeout = SERVICE_TIMEOUT
