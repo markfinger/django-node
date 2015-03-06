@@ -107,8 +107,8 @@ INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = setting_overrides.get(
 for i, arg in enumerate(sys.argv):
     if (
         arg.endswith('manage.py') and
-        len(sys.argv) > i and
-        sys.argv[i + 1] in ('uninstall_package_dependencies', 'install_package_dependencies')
+        'uninstall_package_dependencies' in sys.argv or
+        'install_package_dependencies' in sys.argv
     ):
         INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = False
         break
