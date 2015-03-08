@@ -99,16 +99,17 @@ PACKAGE_DEPENDENCIES = setting_overrides.get(
 
 INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = setting_overrides.get(
     'INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME',
-    True,
+    settings.DEBUG,
 )
 
-# Prevent dependencies from being installed during init if
-# either of the package dependency commands are being run
-for i, arg in enumerate(sys.argv):
-    if (
-        arg.endswith('manage.py') and
-        'uninstall_package_dependencies' in sys.argv or
-        'install_package_dependencies' in sys.argv
-    ):
-        INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = False
-        break
+if INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME:
+    # Prevent dependencies from being installed during init if
+    # either of the package dependency commands are being run
+    for i, arg in enumerate(sys.argv):
+        if (
+            arg.endswith('manage.py') and
+            'uninstall_package_dependencies' in sys.argv or
+            'install_package_dependencies' in sys.argv
+        ):
+            INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME = False
+            break
