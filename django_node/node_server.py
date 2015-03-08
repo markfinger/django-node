@@ -4,7 +4,6 @@ import atexit
 import json
 import subprocess
 import logging
-import inspect
 import tempfile
 import requests
 from requests.exceptions import ConnectionError, ReadTimeout, Timeout
@@ -13,7 +12,6 @@ if six.PY2:
     from urlparse import urljoin
 elif six.PY3:
     from urllib.parse import urljoin
-from .base_service import BaseService
 from .services import EchoService
 from .settings import (
     PATH_TO_NODE, SERVER_PROTOCOL, SERVER_ADDRESS, SERVER_PORT, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
@@ -21,9 +19,9 @@ from .settings import (
 )
 from .exceptions import (
     NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerTimeoutError,
-    MalformedServiceConfig, ModuleDoesNotContainAnyServices
+    MalformedServiceConfig
 )
-from .utils import dynamic_import_module, resolve_dependencies
+from .utils import resolve_dependencies, discover_services
 from .package_dependent import PackageDependent
 
 
@@ -38,7 +36,6 @@ class NodeServer(PackageDependent):
     port = SERVER_PORT
     path_to_source = os.path.join(os.path.dirname(__file__), 'node_modules', 'django-node-server', 'index.js')
     package_dependencies = os.path.dirname(__file__)
-    resolve_dependencies_on_init = True
     shutdown_on_exit = True
     is_running = False
     logger = logging.getLogger(__name__)
@@ -48,38 +45,20 @@ class NodeServer(PackageDependent):
     process = None
 
     def __init__(self):
-        super(NodeServer, self).__init__()
-        if self.resolve_dependencies_on_init:
-            resolve_dependencies(
-                node_version_required=NODE_VERSION_REQUIRED,
-                npm_version_required=NPM_VERSION_REQUIRED,
-            )
-        self.discover_services()
-        if INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME:
-            for service in self.services:
-                service.install_dependencies()
-
-    def discover_services(self):
+        resolve_dependencies(
+            node_version_required=NODE_VERSION_REQUIRED,
+            npm_version_required=NPM_VERSION_REQUIRED,
+        )
         if not isinstance(self.service_config, tuple):
             raise MalformedServiceConfig(
                 'DJANGO_NODE[\'SERVICES\'] setting must be a tuple. Found "{setting}"'.format(setting=SERVICES)
             )
-        for import_path in self.service_config:
-            module = dynamic_import_module(import_path)
-            module_contains_services = False
-            for attr_name in dir(module):
-                service = getattr(module, attr_name)
-                if (
-                    inspect.isclass(service) and
-                    service is not BaseService and
-                    issubclass(service, BaseService) and
-                    service not in self.services
-                ):
-                    service.validate()
-                    self.services += (service,)
-                    module_contains_services = True
-            if not module_contains_services:
-                raise ModuleDoesNotContainAnyServices(import_path)
+        services = discover_services(self.service_config)
+        if services:
+            self.services += services
+        if INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME:
+            for dependent in (self,) + self.services:
+                dependent.install_dependencies()
 
     def get_config(self):
         services = ()

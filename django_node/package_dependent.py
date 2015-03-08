@@ -1,6 +1,6 @@
 import os
 import shutil
-from .settings import PACKAGE_DEPENDENCIES, INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME
+from .settings import PACKAGE_DEPENDENCIES
 from .utils import resolve_dependencies
 
 
@@ -27,10 +27,6 @@ def uninstall_configured_package_dependencies():
 class PackageDependent(object):
     # An optional path to a directory containing a package.json file
     package_dependencies = None
-
-    def __init__(self):
-        if INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME:
-            self.install_dependencies()
 
     @classmethod
     def install_dependencies(cls):

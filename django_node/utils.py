@@ -3,12 +3,14 @@ import subprocess
 import tempfile
 import importlib
 import re
+import inspect
 from django.utils import six
 from .settings import (
     PATH_TO_NODE, PATH_TO_NPM, NODE_VERSION_COMMAND, NODE_VERSION_FILTER, NPM_VERSION_COMMAND, NPM_VERSION_FILTER,
 )
 from .exceptions import (
     DynamicImportError, ErrorInterrogatingEnvironment, MalformedVersionInput, MissingDependency, OutdatedDependency,
+    ModuleDoesNotContainAnyServices
 )
 
 
@@ -219,3 +221,28 @@ def resolve_dependencies(node_version_required=None, npm_version_required=None, 
     # Ensure that the required packages have been installed
     if path_to_run_npm_install_in is not None:
         npm.install(path_to_run_npm_install_in)
+
+
+def discover_services(service_config):
+    from .base_service import BaseService  # Avoid a circular import
+
+    services = ()
+
+    for import_path in service_config:
+        module = dynamic_import_module(import_path)
+        module_contains_services = False
+        for attr_name in dir(module):
+            service = getattr(module, attr_name)
+            if (
+                inspect.isclass(service) and
+                service is not BaseService and
+                issubclass(service, BaseService) and
+                service not in services
+            ):
+                service.validate()
+                services += (service,)
+                module_contains_services = True
+        if not module_contains_services:
+            raise ModuleDoesNotContainAnyServices(import_path)
+
+    return services

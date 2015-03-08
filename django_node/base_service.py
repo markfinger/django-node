@@ -20,7 +20,6 @@ class BaseService(PackageDependent):
     timeout = SERVICE_TIMEOUT
 
     def __init__(self):
-        super(BaseService, self).__init__()
         self.warn_if_not_configured()
 
     @classmethod
