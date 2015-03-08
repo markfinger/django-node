@@ -17,7 +17,7 @@ from .base_service import BaseService
 from .services import EchoService
 from .settings import (
     PATH_TO_NODE, SERVER_PROTOCOL, SERVER_ADDRESS, SERVER_PORT, NODE_VERSION_REQUIRED, NPM_VERSION_REQUIRED,
-    SERVICES,
+    SERVICES, INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME
 )
 from .exceptions import (
     NodeServerConnectionError, NodeServerStartError, NodeServerAddressInUseError, NodeServerTimeoutError,
@@ -55,6 +55,9 @@ class NodeServer(PackageDependent):
                 npm_version_required=NPM_VERSION_REQUIRED,
             )
         self.discover_services()
+        if INSTALL_PACKAGE_DEPENDENCIES_DURING_RUNTIME:
+            for service in self.services:
+                service.install_dependencies()
 
     def discover_services(self):
         if not isinstance(self.service_config, tuple):
