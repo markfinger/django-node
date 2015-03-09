@@ -1,5 +1,5 @@
 var echo = function(request, response) {
-	var echo = request.query.echo;
+	var echo = request.body.echo;
 
 	if (!echo) {
 		throw new Error('Missing `echo` param');

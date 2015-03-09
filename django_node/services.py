@@ -25,11 +25,11 @@ class EchoService(BaseService):
         self.ensure_loaded()
 
         try:
-            response = self.get_server().get_service(
+            response = self.get_server().send_request_to_service(
                 self.get_name(),
                 timeout=self.timeout,
                 ensure_started=False,
-                params={
+                json={
                     'echo': self.expected_output
                 }
             )

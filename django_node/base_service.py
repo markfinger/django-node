@@ -86,10 +86,10 @@ class BaseService(PackageDependent):
     def send(self, **kwargs):
         self.ensure_loaded()
 
-        response = self.server.get_service(
+        response = self.server.send_request_to_service(
             self.get_name(),
             timeout=self.timeout,
-            params=kwargs
+            json=kwargs
         )
 
         return self.handle_response(response)
