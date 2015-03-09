@@ -1,5 +1,6 @@
 import os
 import warnings
+import json
 from django.utils import six
 if six.PY2:
     from urlparse import urljoin
@@ -79,6 +80,12 @@ class BaseService(PackageDependent):
             ))
         return response
 
+    def get_json_decoder(self):
+        return None
+
+    def generate_cache_key(self, serialized_data, data):
+        return None
+
     def ensure_loaded(self):
         if self.__class__ not in self.get_server().services:
             raise ServerConfigMissingService(self.__class__)
@@ -86,10 +93,16 @@ class BaseService(PackageDependent):
     def send(self, **kwargs):
         self.ensure_loaded()
 
+        data = kwargs
+        serialized_data = json.dumps(data, cls=self.get_json_decoder())
+
         response = self.server.send_request_to_service(
             self.get_name(),
             timeout=self.timeout,
-            json=kwargs
+            data={
+                'cache_key': self.generate_cache_key(serialized_data, data),
+                'data': serialized_data
+            }
         )
 
         return self.handle_response(response)

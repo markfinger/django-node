@@ -237,7 +237,8 @@ def discover_services(service_config):
                 inspect.isclass(service) and
                 service is not BaseService and
                 issubclass(service, BaseService) and
-                service not in services
+                service not in services and
+                getattr(service, 'path_to_source', None)
             ):
                 service.validate()
                 services += (service,)

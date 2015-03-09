@@ -1,11 +1,14 @@
-var echo = function(request, response) {
-	var echo = request.body.echo;
+var service = function(data, response) {
+	var echo = data.echo;
 
 	if (!echo) {
-		throw new Error('Missing `echo` param');
+		var err = 'Missing `echo` in data';
+		response.status(500).send(err);
+		console.error(new Error(err));
+		return;
 	}
 
 	response.send(echo);
 };
 
-module.exports = echo;
+module.exports = service;

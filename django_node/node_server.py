@@ -200,22 +200,22 @@ class NodeServer(PackageDependent):
         """
         return self.echo_service.test()
 
-    def send_request_to_service(self, endpoint, timeout=None, json=None, ensure_started=None):
+    def send_request_to_service(self, endpoint, timeout=None, data=None, ensure_started=None):
         if ensure_started is None:
             ensure_started = True
 
         if ensure_started and not self.is_running:
             self.start()
 
-        self.log('Sending request to endpoint "{url}" with json "{json}"'.format(
+        self.log('Sending request to endpoint "{url}" with data "{data}"'.format(
             url=endpoint,
-            json=json,
+            data=data,
         ))
 
         absolute_url = urljoin(self.get_server_url(), endpoint)
 
         try:
-            return requests.post(absolute_url, timeout=timeout, json=json)
+            return requests.post(absolute_url, timeout=timeout, data=data)
         except ConnectionError as e:
             six.reraise(NodeServerConnectionError, NodeServerConnectionError(absolute_url, *e.args), sys.exc_info()[2])
         except (ReadTimeout, Timeout) as e:

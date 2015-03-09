@@ -1,4 +1,5 @@
 import os
+import json
 from .base_service import BaseService
 from .exceptions import NodeServerConnectionError, NodeServerTimeoutError
 from .settings import SERVER_TEST_TIMEOUT
@@ -29,8 +30,8 @@ class EchoService(BaseService):
                 self.get_name(),
                 timeout=self.timeout,
                 ensure_started=False,
-                json={
-                    'echo': self.expected_output
+                data={
+                    'data': json.dumps({'echo': self.expected_output})
                 }
             )
         except (NodeServerConnectionError, NodeServerTimeoutError):
