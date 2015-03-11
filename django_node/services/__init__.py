@@ -1,8 +1,8 @@
 import os
 import json
-from .base_service import BaseService
-from .exceptions import NodeServerConnectionError, NodeServerTimeoutError
-from .settings import SERVER_TEST_TIMEOUT
+from ..base_service import BaseService
+from ..exceptions import NodeServerConnectionError, NodeServerTimeoutError
+from ..settings import SERVER_TEST_TIMEOUT
 
 
 class EchoService(BaseService):
@@ -14,7 +14,7 @@ class EchoService(BaseService):
     is running as expected.
     """
 
-    path_to_source = os.path.join(os.path.dirname(__file__), 'services', 'echo.js')
+    path_to_source = os.path.join(os.path.dirname(__file__), 'echo.js')
     timeout = SERVER_TEST_TIMEOUT
     expected_output = '__NODE_SERVER_RUNNING__'
 
