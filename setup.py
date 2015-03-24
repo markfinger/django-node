@@ -9,6 +9,7 @@ setup(
     package_data={
         'django_node': [
             'node_server.js',
+            'services/echo.js',
             'package.json',
         ],
     },
