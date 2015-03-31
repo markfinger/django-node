@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '3.0.1'
+VERSION = '4.0.0'
 
 setup(
     name='django-node',
