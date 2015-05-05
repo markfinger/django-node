@@ -1,3 +1,13 @@
+Deprecated
+----------
+
+`django-node` has been deprecated. The core has been split into the following packages:
+
+- [python-js-host](https://github.com/markfinger/python-js-host)
+- [python-nodejs](https://github.com/markfinger/python-nodejs)
+- [python-npm](https://github.com/markfinger/python-npm)
+
+
 django-node
 ===========
 
