@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '4.0.1'
+VERSION = '4.0.2'
 
 setup(
     name='django-node',
@@ -25,7 +25,9 @@ Deprecated
 django-node has been deprecated. The project has been split into the following packages:
 
 https://github.com/markfinger/python-js-host
+
 https://github.com/markfinger/python-nodejs
+
 https://github.com/markfinger/python-npm
 
 Documentation for django-node is available at https://github.com/markfinger/django-node
